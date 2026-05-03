@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { PUBLIC_ROUTES, AGENCE_ONLY_ROUTES } from '@/constants/routes'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const pathname = request.nextUrl.pathname
@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  // Rafraîchir la session — obligatoire, ne pas supprimer
+  // Rafraîchir la session — obligatoire pour que Supabase renouvelle le token
   let user = null
   try {
     const { data } = await supabase.auth.getUser()
