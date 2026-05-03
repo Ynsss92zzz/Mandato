@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"const Stripe = require\\('stripe'\\); console.log\\(Object.keys\\(Stripe.LATEST_API_VERSION ?? {}\\).length > 0 ? Stripe.LATEST_API_VERSION : 'not exported'\\)\")",
+      "Bash(node -e \"const s = require\\('/c/Users/ynss9/immo-saas/node_modules/stripe'\\); console.log\\(s.LATEST_API_VERSION ?? 'none'\\)\")",
+      "Bash(node -e \"const Stripe = require\\('/c/Users/ynss9/immo-saas/node_modules/stripe'\\); const s = new Stripe\\('sk_test_x'\\); console.log\\('ok'\\)\")",
+      "Bash(xargs grep *)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\src\\\\app\\\\page.tsx\" -Force)",
+      "Bash(npm run *)"
+    ]
+  }
+}
