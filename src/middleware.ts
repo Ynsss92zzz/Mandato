@@ -3,38 +3,58 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { PUBLIC_ROUTES, AGENCE_ONLY_ROUTES } from '@/constants/routes'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
-  // Rafraîchir la session — obligatoire, ne pas supprimer
-  const { data: { user } } = await supabase.auth.getUser()
-
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const pathname = request.nextUrl.pathname
 
-  // Route API publique (widget embed, webhooks) → toujours passer
+  // API routes publiques → toujours passer avant tout
   if (
     pathname.startsWith('/api/widget') ||
     pathname.startsWith('/api/webhooks') ||
     pathname.startsWith('/api/auth')
   ) {
+    return NextResponse.next({ request })
+  }
+
+  // Env vars manquantes → ne pas crasher, passer les routes publiques
+  if (!supabaseUrl || !supabaseAnonKey) {
+    const isPublicPage = PUBLIC_ROUTES.includes(pathname)
+    if (!isPublicPage) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    return NextResponse.next({ request })
+  }
+
+  let supabaseResponse = NextResponse.next({ request })
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        supabaseResponse = NextResponse.next({ request })
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options)
+        )
+      },
+    },
+  })
+
+  // Rafraîchir la session — obligatoire, ne pas supprimer
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // Supabase injoignable → traiter comme non-authentifié
+    const isPublicPage = PUBLIC_ROUTES.includes(pathname)
+    if (!isPublicPage) {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
     return supabaseResponse
   }
 
@@ -52,30 +72,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Allow logged-in users to access onboarding (needed for first-time setup)
+  // Laisser passer l'onboarding pour les utilisateurs connectés
   if (user && pathname === '/onboarding') {
     return supabaseResponse
   }
 
   // Routes réservées au plan Agence — vérification du plan en DB
   if (user && AGENCE_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
-    // Récupérer l'agency_id via agency_members, puis le plan
-    const { data: member } = await supabase
-      .from('agency_members')
-      .select('agency_id')
-      .eq('profile_id', user.id)
-      .single()
-
-    if (member?.agency_id) {
-      const { data: sub } = await supabase
-        .from('subscriptions')
-        .select('plan')
-        .eq('agency_id', member.agency_id)
+    try {
+      const { data: member } = await supabase
+        .from('agency_members')
+        .select('agency_id')
+        .eq('profile_id', user.id)
         .single()
 
-      if (!sub || sub.plan !== 'agence') {
-        return NextResponse.redirect(new URL('/settings/billing?upgrade=agence', request.url))
+      if (member?.agency_id) {
+        const { data: sub } = await supabase
+          .from('subscriptions')
+          .select('plan')
+          .eq('agency_id', member.agency_id)
+          .single()
+
+        if (!sub || sub.plan !== 'agence') {
+          return NextResponse.redirect(new URL('/settings/billing?upgrade=agence', request.url))
+        }
       }
+    } catch {
+      // DB injoignable → passer plutôt que crasher
     }
   }
 
