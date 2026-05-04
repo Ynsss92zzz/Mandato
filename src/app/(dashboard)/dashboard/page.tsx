@@ -31,15 +31,15 @@ interface MetricCardProps {
 function MetricCard({ label, value, subtext, trend, icon, accent }: MetricCardProps) {
   const trendUp = trend && trend.value >= 0
   return (
-    <div className={`bg-white rounded-2xl border p-5 flex flex-col gap-3 ${accent ? 'border-orange/30 ring-1 ring-orange/10' : 'border-zinc-100'}`}>
+    <div className={`bg-white rounded-2xl border p-5 flex flex-col gap-3 ${accent ? 'border-[#FF6B35]/30 ring-1 ring-[#FF6B35]/10' : 'border-zinc-100'}`}>
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-zinc-500">{label}</p>
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent ? 'bg-orange/10 text-orange' : 'bg-navy-50 text-navy'}`}>
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent ? 'bg-[#FF6B35]/10 text-[#FF6B35]' : 'bg-[#f0f3f9] text-[#1B2B4B]'}`}>
           {icon}
         </div>
       </div>
       <div>
-        <p className="text-3xl font-bold text-navy">{value}</p>
+        <p className="text-3xl font-bold text-[#1B2B4B]">{value}</p>
         {subtext && <p className="text-xs text-zinc-400 mt-0.5">{subtext}</p>}
       </div>
       {trend && (
@@ -66,7 +66,7 @@ const STATUS_COLORS: Record<string, string> = {
   nouveau: 'bg-blue-50 text-blue-700',
   contacte: 'bg-yellow-50 text-yellow-700',
   qualifie: 'bg-purple-50 text-purple-700',
-  rdv_planifie: 'bg-orange-50 text-orange-700',
+  rdv_planifie: 'bg-[#fff4f0] text-[#FF6B35]-700',
   proposition: 'bg-indigo-50 text-indigo-700',
   gagne: 'bg-green-50 text-green-700',
   perdu: 'bg-zinc-100 text-zinc-500',
@@ -122,12 +122,12 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-navy">Bonjour, {userName} 👋</h1>
+          <h1 className="text-2xl font-bold text-[#1B2B4B]">Bonjour, {userName} 👋</h1>
           <p className="text-zinc-500 text-sm mt-0.5">{formatDate(now.toISOString(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
         <Link
           href="/leads"
-          className="bg-orange hover:bg-orange-light text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2"
+          className="bg-[#FF6B35] hover:bg-[#FF8C5A] text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2"
         >
           <Users className="w-4 h-4" />
           Voir les leads
@@ -136,16 +136,16 @@ export default async function DashboardPage() {
 
       {/* Alerte quota Starter */}
       {isStarter && leadsQuotaPercent >= 70 && (
-        <div className={`rounded-2xl border px-5 py-4 flex items-center justify-between gap-4 ${leadsQuotaPercent >= 90 ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'}`}>
+        <div className={`rounded-2xl border px-5 py-4 flex items-center justify-between gap-4 ${leadsQuotaPercent >= 90 ? 'bg-red-50 border-red-200' : 'bg-[#fff4f0] border-[#FF6B35]-200'}`}>
           <div>
-            <p className={`text-sm font-semibold ${leadsQuotaPercent >= 90 ? 'text-red-700' : 'text-orange-700'}`}>
+            <p className={`text-sm font-semibold ${leadsQuotaPercent >= 90 ? 'text-red-700' : 'text-[#FF6B35]-700'}`}>
               {leadsQuotaPercent >= 90 ? '🚨 Quota presque atteint' : '⚠️ Quota leads bientôt atteint'}
             </p>
-            <p className={`text-xs mt-0.5 ${leadsQuotaPercent >= 90 ? 'text-red-600' : 'text-orange-600'}`}>
+            <p className={`text-xs mt-0.5 ${leadsQuotaPercent >= 90 ? 'text-red-600' : 'text-[#FF6B35]-600'}`}>
               {leadsQuotaUsed}/50 leads ce mois — passez en Pro pour des leads illimités
             </p>
           </div>
-          <Link href="/settings/billing" className="shrink-0 bg-orange text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-orange-light transition-colors">
+          <Link href="/settings/billing" className="shrink-0 bg-[#FF6B35] text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-[#FF8C5A] transition-colors">
             Passer en Pro
           </Link>
         </div>
@@ -186,8 +186,8 @@ export default async function DashboardPage() {
         {/* Leads récents */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-zinc-100">
           <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-50">
-            <h2 className="text-sm font-semibold text-navy">Derniers leads</h2>
-            <Link href="/leads" className="text-xs text-orange hover:underline font-medium">
+            <h2 className="text-sm font-semibold text-[#1B2B4B]">Derniers leads</h2>
+            <Link href="/leads" className="text-xs text-[#FF6B35] hover:underline font-medium">
               Voir tout →
             </Link>
           </div>
@@ -200,14 +200,14 @@ export default async function DashboardPage() {
                   className="flex items-center gap-4 px-5 py-3.5 hover:bg-zinc-50/50 transition-colors group"
                 >
                   {/* Avatar */}
-                  <div className="w-8 h-8 bg-navy-50 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-navy text-xs font-semibold">
+                  <div className="w-8 h-8 bg-[#f0f3f9] rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-[#1B2B4B] text-xs font-semibold">
                       {lead.first_name[0]}{lead.last_name?.[0] ?? ''}
                     </span>
                   </div>
                   {/* Infos */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-800 group-hover:text-navy truncate">
+                    <p className="text-sm font-medium text-zinc-800 group-hover:text-[#1B2B4B] truncate">
                       {lead.first_name} {lead.last_name}
                     </p>
                     <p className="text-xs text-zinc-400 truncate">{lead.email ?? 'Pas d\'email'}</p>
@@ -235,12 +235,12 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-              <div className="w-12 h-12 bg-navy-50 rounded-2xl flex items-center justify-center mb-3">
-                <Users className="w-5 h-5 text-navy/40" />
+              <div className="w-12 h-12 bg-[#f0f3f9] rounded-2xl flex items-center justify-center mb-3">
+                <Users className="w-5 h-5 text-[#1B2B4B]/40" />
               </div>
               <p className="text-sm font-medium text-zinc-600">Aucun lead pour l&apos;instant</p>
               <p className="text-xs text-zinc-400 mt-1">Ajoutez votre premier lead ou installez le widget sur votre site</p>
-              <Link href="/leads" className="mt-4 text-xs text-orange font-medium hover:underline">
+              <Link href="/leads" className="mt-4 text-xs text-[#FF6B35] font-medium hover:underline">
                 Ajouter un lead →
               </Link>
             </div>
@@ -250,7 +250,7 @@ export default async function DashboardPage() {
         {/* Actions rapides */}
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-zinc-100 p-5">
-            <h2 className="text-sm font-semibold text-navy mb-4">Actions rapides</h2>
+            <h2 className="text-sm font-semibold text-[#1B2B4B] mb-4">Actions rapides</h2>
             <div className="space-y-2">
               {[
                 { href: '/leads', label: 'Ajouter un lead', icon: '➕', desc: 'Saisie manuelle' },
@@ -261,11 +261,11 @@ export default async function DashboardPage() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-navy-50 transition-colors group"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#f0f3f9] transition-colors group"
                 >
                   <span className="text-lg leading-none">{icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-700 group-hover:text-navy">{label}</p>
+                    <p className="text-sm font-medium text-zinc-700 group-hover:text-[#1B2B4B]">{label}</p>
                     <p className="text-xs text-zinc-400">{desc}</p>
                   </div>
                 </Link>
@@ -275,7 +275,7 @@ export default async function DashboardPage() {
 
           {/* Activité récente */}
           <div className="bg-white rounded-2xl border border-zinc-100 p-5">
-            <h2 className="text-sm font-semibold text-navy mb-4">Résumé du mois</h2>
+            <h2 className="text-sm font-semibold text-[#1B2B4B] mb-4">Résumé du mois</h2>
             <div className="space-y-3">
               {[
                 { label: 'Leads créés', value: leadsThisMonth ?? 0, icon: '👤' },
@@ -287,7 +287,7 @@ export default async function DashboardPage() {
                     <span className="text-sm">{icon}</span>
                     <span className="text-sm text-zinc-600">{label}</span>
                   </div>
-                  <span className="text-sm font-semibold text-navy">{value}</span>
+                  <span className="text-sm font-semibold text-[#1B2B4B]">{value}</span>
                 </div>
               ))}
 
@@ -300,7 +300,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${leadsQuotaPercent >= 90 ? 'bg-red-500' : leadsQuotaPercent >= 70 ? 'bg-orange' : 'bg-green-500'}`}
+                      className={`h-full rounded-full transition-all ${leadsQuotaPercent >= 90 ? 'bg-red-500' : leadsQuotaPercent >= 70 ? 'bg-[#FF6B35]' : 'bg-green-500'}`}
                       style={{ width: `${Math.min(leadsQuotaPercent, 100)}%` }}
                     />
                   </div>

@@ -41,11 +41,11 @@ export function Sidebar({ agencyName, plan }: SidebarProps) {
   }
 
   return (
-    <aside className="w-64 bg-navy flex flex-col h-full flex-shrink-0">
+    <aside className="w-64 bg-[#1B2B4B] flex flex-col h-full flex-shrink-0">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
         <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-orange rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 bg-[#FF6B35] rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-sm">M</span>
           </div>
           <span className="text-white font-bold text-lg tracking-tight">Mandato</span>
@@ -68,7 +68,7 @@ export function Sidebar({ agencyName, plan }: SidebarProps) {
             <Icon
               className={cn(
                 'w-4 h-4 flex-shrink-0',
-                isActive(href) ? 'text-orange' : 'text-white/40 group-hover:text-white/70'
+                isActive(href) ? 'text-[#FF6B35]' : 'text-white/40 group-hover:text-white/70'
               )}
             />
             {label}
@@ -99,12 +99,12 @@ export function Sidebar({ agencyName, plan }: SidebarProps) {
             <Icon
               className={cn(
                 'w-4 h-4 flex-shrink-0',
-                isActive(href) ? 'text-orange' : 'text-white/40 group-hover:text-white/70'
+                isActive(href) ? 'text-[#FF6B35]' : 'text-white/40 group-hover:text-white/70'
               )}
             />
             {label}
             {plan !== 'agence' && (
-              <span className="ml-auto text-[10px] bg-orange/20 text-orange px-1.5 py-0.5 rounded font-medium">
+              <span className="ml-auto text-[10px] bg-[#FF6B35]/20 text-[#FF6B35] px-1.5 py-0.5 rounded font-medium">
                 Agence
               </span>
             )}

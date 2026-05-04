@@ -28,7 +28,7 @@ export function ReferralDashboard({ info }: { info: ReferralInfo }) {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-semibold text-navy">Programme de parrainage</h1>
+        <h1 className="text-2xl font-semibold text-[#1B2B4B]">Programme de parrainage</h1>
         <p className="text-sm text-zinc-400 mt-1">
           Gagnez 1 mois offert pour chaque agent que vous recommandez.
         </p>
@@ -56,13 +56,13 @@ export function ReferralDashboard({ info }: { info: ReferralInfo }) {
 
       {/* Your referral link */}
       <div className="bg-white rounded-xl border border-zinc-200 p-5">
-        <h2 className="text-sm font-semibold text-navy mb-4">Votre lien de parrainage</h2>
+        <h2 className="text-sm font-semibold text-[#1B2B4B] mb-4">Votre lien de parrainage</h2>
 
         {info.code ? (
           <>
             <div className="flex gap-2 mb-3">
               <div className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2.5 flex items-center gap-2">
-                <span className="text-xs font-mono text-navy/60 tracking-wider font-semibold">
+                <span className="text-xs font-mono text-[#1B2B4B]/60 tracking-wider font-semibold">
                   {info.code}
                 </span>
                 <span className="text-zinc-300">·</span>
@@ -70,7 +70,7 @@ export function ReferralDashboard({ info }: { info: ReferralInfo }) {
               </div>
               <button
                 onClick={copyLink}
-                className="px-4 py-2.5 text-sm font-medium text-white bg-navy hover:bg-navy-light rounded-lg transition-colors flex-none"
+                className="px-4 py-2.5 text-sm font-medium text-white bg-[#1B2B4B] hover:bg-[#2D4270] rounded-lg transition-colors flex-none"
               >
                 {copied ? '✓ Copié !' : 'Copier'}
               </button>
@@ -103,11 +103,11 @@ export function ReferralDashboard({ info }: { info: ReferralInfo }) {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center">
-          <p className="text-3xl font-bold text-navy mb-1">{info.totalReferrals}</p>
+          <p className="text-3xl font-bold text-[#1B2B4B] mb-1">{info.totalReferrals}</p>
           <p className="text-sm text-zinc-400">Filleul{info.totalReferrals > 1 ? 's' : ''} inscrit{info.totalReferrals > 1 ? 's' : ''}</p>
         </div>
         <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center">
-          <p className="text-3xl font-bold text-orange mb-1">{info.rewardedMonths}</p>
+          <p className="text-3xl font-bold text-[#FF6B35] mb-1">{info.rewardedMonths}</p>
           <p className="text-sm text-zinc-400">Mois offert{info.rewardedMonths > 1 ? 's' : ''} gagnés</p>
         </div>
       </div>
@@ -116,7 +116,7 @@ export function ReferralDashboard({ info }: { info: ReferralInfo }) {
       {info.referrals.length > 0 && (
         <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-zinc-100">
-            <h2 className="text-sm font-semibold text-navy">Historique des parrainages</h2>
+            <h2 className="text-sm font-semibold text-[#1B2B4B]">Historique des parrainages</h2>
           </div>
           <div className="divide-y divide-zinc-50">
             {info.referrals.map((r, i) => (
@@ -126,7 +126,7 @@ export function ReferralDashboard({ info }: { info: ReferralInfo }) {
                     <span className="text-xs font-semibold text-zinc-500">#{i + 1}</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-navy">Filleul #{i + 1}</p>
+                    <p className="text-sm font-medium text-[#1B2B4B]">Filleul #{i + 1}</p>
                     <p className="text-xs text-zinc-400">
                       Inscrit le {new Date(r.used_at).toLocaleDateString('fr-FR', {
                         day: 'numeric', month: 'long', year: 'numeric',

@@ -41,7 +41,7 @@ function MemberAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: str
   }
 
   return (
-    <div className="w-10 h-10 rounded-full bg-navy flex items-center justify-center flex-none">
+    <div className="w-10 h-10 rounded-full bg-[#1B2B4B] flex items-center justify-center flex-none">
       <span className="text-xs font-semibold text-white">{initials}</span>
     </div>
   )
@@ -84,7 +84,7 @@ export function TeamView({ members, currentUserId, isOwner }: TeamViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-navy">Mon équipe</h1>
+          <h1 className="text-2xl font-semibold text-[#1B2B4B]">Mon équipe</h1>
           <span className="text-sm text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded-full font-medium">
             {members.length}
           </span>
@@ -92,7 +92,7 @@ export function TeamView({ members, currentUserId, isOwner }: TeamViewProps) {
         {isOwner && (
           <button
             onClick={() => setShowInvite(true)}
-            className="flex items-center gap-1.5 bg-orange text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-light transition-colors"
+            className="flex items-center gap-1.5 bg-[#FF6B35] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#FF8C5A] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -106,12 +106,12 @@ export function TeamView({ members, currentUserId, isOwner }: TeamViewProps) {
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
         {members.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-14 h-14 bg-navy-50 rounded-2xl flex items-center justify-center mb-4">
-              <svg className="w-7 h-7 text-navy/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-14 h-14 bg-[#f0f3f9] rounded-2xl flex items-center justify-center mb-4">
+              <svg className="w-7 h-7 text-[#1B2B4B]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-navy mb-1">Aucun membre</p>
+            <p className="text-sm font-medium text-[#1B2B4B] mb-1">Aucun membre</p>
             <p className="text-xs text-zinc-400">Invitez des agents pour collaborer sur vos leads</p>
           </div>
         ) : (
@@ -141,7 +141,7 @@ export function TeamView({ members, currentUserId, isOwner }: TeamViewProps) {
                       <div className="flex items-center gap-3">
                         <MemberAvatar name={member.fullName} avatarUrl={member.avatarUrl} />
                         <div>
-                          <p className="text-sm font-medium text-navy">
+                          <p className="text-sm font-medium text-[#1B2B4B]">
                             {member.fullName ?? 'Sans nom'}
                             {isCurrentUser && (
                               <span className="ml-2 text-xs text-zinc-400">(vous)</span>
@@ -156,7 +156,7 @@ export function TeamView({ members, currentUserId, isOwner }: TeamViewProps) {
                         <select
                           value={member.role}
                           onChange={(e) => handleRoleChange(member, e.target.value as AgencyMemberRole)}
-                          className={`text-xs font-medium px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-navy/20 ${roleCfg.color}`}
+                          className={`text-xs font-medium px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1B2B4B]/20 ${roleCfg.color}`}
                         >
                           <option value="agent">Agent</option>
                           <option value="owner">Propriétaire</option>
@@ -168,10 +168,10 @@ export function TeamView({ members, currentUserId, isOwner }: TeamViewProps) {
                       )}
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm text-navy font-medium">{member.leadCount}</span>
+                      <span className="text-sm text-[#1B2B4B] font-medium">{member.leadCount}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm text-navy font-medium">{member.wonCount}</span>
+                      <span className="text-sm text-[#1B2B4B] font-medium">{member.wonCount}</span>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ export function TeamView({ members, currentUserId, isOwner }: TeamViewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setRemovingId(null)} />
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 className="text-base font-semibold text-navy mb-2">Retirer ce membre ?</h3>
+            <h3 className="text-base font-semibold text-[#1B2B4B] mb-2">Retirer ce membre ?</h3>
             <p className="text-sm text-zinc-500 mb-5">
               Ce membre perdra l&apos;accès à l&apos;agence. Ses leads restent dans le système.
             </p>
@@ -251,7 +251,7 @@ export function TeamView({ members, currentUserId, isOwner }: TeamViewProps) {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-navy text-white text-sm px-4 py-3 rounded-xl shadow-lg animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#1B2B4B] text-white text-sm px-4 py-3 rounded-xl shadow-lg animate-in fade-in slide-in-from-bottom-2">
           {toast}
         </div>
       )}

@@ -25,9 +25,9 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
           key={i}
           className={`h-1.5 rounded-full transition-all ${
             i + 1 === current
-              ? 'w-8 bg-orange'
+              ? 'w-8 bg-[#FF6B35]'
               : i + 1 < current
-                ? 'w-4 bg-orange/40'
+                ? 'w-4 bg-[#FF6B35]/40'
                 : 'w-4 bg-zinc-200'
           }`}
         />
@@ -40,7 +40,7 @@ function Step1Welcome({ onNext }: { onNext: () => void }) {
   return (
     <div className="text-center">
       <div className="text-6xl mb-6">🎉</div>
-      <h2 className="text-2xl font-bold text-navy mb-3">Votre compte est prêt !</h2>
+      <h2 className="text-2xl font-bold text-[#1B2B4B] mb-3">Votre compte est prêt !</h2>
       <p className="text-zinc-500 leading-relaxed mb-8 max-w-sm mx-auto">
         En quelques étapes, nous allons configurer votre espace Mandato pour que vous puissiez capturer et qualifier vos premiers leads dès aujourd&apos;hui.
       </p>
@@ -50,16 +50,16 @@ function Step1Welcome({ onNext }: { onNext: () => void }) {
           { icon: '📈', label: '+67%', sub: 'de taux de réponse' },
           { icon: '⏰', label: '10h/semaine', sub: 'économisées en moyenne' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-navy-50 rounded-xl p-4">
+          <div key={stat.label} className="bg-[#f0f3f9] rounded-xl p-4">
             <div className="text-2xl mb-1">{stat.icon}</div>
-            <p className="text-sm font-bold text-navy">{stat.label}</p>
+            <p className="text-sm font-bold text-[#1B2B4B]">{stat.label}</p>
             <p className="text-xs text-zinc-400">{stat.sub}</p>
           </div>
         ))}
       </div>
       <button
         onClick={onNext}
-        className="w-full py-3.5 bg-orange hover:bg-orange-light text-white font-semibold rounded-xl transition-colors"
+        className="w-full py-3.5 bg-[#FF6B35] hover:bg-[#FF8C5A] text-white font-semibold rounded-xl transition-colors"
       >
         Commencer la configuration →
       </button>
@@ -73,15 +73,15 @@ function Step2Widget({ onNext }: { onNext: () => void }) {
 
   return (
     <div>
-      <div className="flex items-center justify-center w-14 h-14 bg-orange/10 rounded-2xl mb-6 mx-auto">
+      <div className="flex items-center justify-center w-14 h-14 bg-[#FF6B35]/10 rounded-2xl mb-6 mx-auto">
         <span className="text-2xl">🎯</span>
       </div>
-      <h2 className="text-xl font-bold text-navy mb-2 text-center">Widget de capture</h2>
+      <h2 className="text-xl font-bold text-[#1B2B4B] mb-2 text-center">Widget de capture</h2>
       <p className="text-sm text-zinc-500 text-center mb-6 leading-relaxed">
         Collez ce code avant la balise <code className="bg-zinc-100 px-1 rounded text-xs">&lt;/body&gt;</code> de votre site pour commencer à capturer des leads.
       </p>
 
-      <div className="bg-navy rounded-xl p-4 mb-4 relative">
+      <div className="bg-[#1B2B4B] rounded-xl p-4 mb-4 relative">
         <pre className="text-xs text-green-300 overflow-x-auto whitespace-pre-wrap break-all">
           {snippet}
         </pre>
@@ -105,7 +105,7 @@ function Step2Widget({ onNext }: { onNext: () => void }) {
       <div className="flex gap-3">
         <button
           onClick={onNext}
-          className="flex-1 py-3 bg-orange hover:bg-orange-light text-white font-semibold rounded-xl transition-colors text-sm"
+          className="flex-1 py-3 bg-[#FF6B35] hover:bg-[#FF8C5A] text-white font-semibold rounded-xl transition-colors text-sm"
         >
           C&apos;est installé →
         </button>
@@ -132,7 +132,7 @@ function Step3Channels({ onNext }: { onNext: () => void }) {
       <div className="flex items-center justify-center w-14 h-14 bg-green-100 rounded-2xl mb-6 mx-auto">
         <span className="text-2xl">📲</span>
       </div>
-      <h2 className="text-xl font-bold text-navy mb-2 text-center">Canaux de communication</h2>
+      <h2 className="text-xl font-bold text-[#1B2B4B] mb-2 text-center">Canaux de communication</h2>
       <p className="text-sm text-zinc-500 text-center mb-6">
         Mandato peut relancer vos leads via plusieurs canaux simultanément.
       </p>
@@ -149,7 +149,7 @@ function Step3Channels({ onNext }: { onNext: () => void }) {
           >
             <span className="text-2xl">{ch.icon}</span>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-navy">{ch.label}</p>
+              <p className="text-sm font-semibold text-[#1B2B4B]">{ch.label}</p>
               <p className="text-xs text-zinc-400">{ch.desc}</p>
             </div>
             {ch.always ? (
@@ -159,7 +159,7 @@ function Step3Channels({ onNext }: { onNext: () => void }) {
             ) : (
               <a
                 href="/settings/billing"
-                className="text-xs font-medium text-orange hover:underline"
+                className="text-xs font-medium text-[#FF6B35] hover:underline"
               >
                 Upgrader →
               </a>
@@ -170,7 +170,7 @@ function Step3Channels({ onNext }: { onNext: () => void }) {
 
       <button
         onClick={onNext}
-        className="w-full py-3.5 bg-orange hover:bg-orange-light text-white font-semibold rounded-xl transition-colors"
+        className="w-full py-3.5 bg-[#FF6B35] hover:bg-[#FF8C5A] text-white font-semibold rounded-xl transition-colors"
       >
         Continuer →
       </button>
@@ -211,7 +211,7 @@ function Step4Referral({
       <div className="flex items-center justify-center w-14 h-14 bg-amber-100 rounded-2xl mb-6 mx-auto">
         <span className="text-2xl">🎁</span>
       </div>
-      <h2 className="text-xl font-bold text-navy mb-2 text-center">Code de parrainage</h2>
+      <h2 className="text-xl font-bold text-[#1B2B4B] mb-2 text-center">Code de parrainage</h2>
       <p className="text-sm text-zinc-500 text-center mb-6 leading-relaxed">
         Si un agent vous a recommandé Mandato, entrez son code pour profiter de 30 jours d&apos;essai au lieu de 14.
       </p>
@@ -225,12 +225,12 @@ function Step4Referral({
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="Ex: ABCD1234"
               maxLength={8}
-              className="flex-1 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-mono text-navy uppercase placeholder-zinc-300 focus:outline-none focus:border-navy/50 tracking-widest"
+              className="flex-1 border border-zinc-200 rounded-xl px-4 py-3 text-sm font-mono text-[#1B2B4B] uppercase placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 tracking-widest"
             />
             <button
               onClick={handleApply}
               disabled={isPending || !code.trim()}
-              className="px-5 py-3 bg-navy text-white text-sm font-semibold rounded-xl hover:bg-navy-light transition-colors disabled:opacity-50"
+              className="px-5 py-3 bg-[#1B2B4B] text-white text-sm font-semibold rounded-xl hover:bg-[#2D4270] transition-colors disabled:opacity-50"
             >
               {isPending ? '...' : 'Appliquer'}
             </button>
@@ -251,7 +251,7 @@ function Step4Referral({
       <div className="flex gap-3">
         <button
           onClick={onComplete}
-          className="flex-1 py-3.5 bg-orange hover:bg-orange-light text-white font-semibold rounded-xl transition-colors"
+          className="flex-1 py-3.5 bg-[#FF6B35] hover:bg-[#FF8C5A] text-white font-semibold rounded-xl transition-colors"
         >
           Accéder à mon espace →
         </button>
@@ -291,11 +291,11 @@ export function OnboardingWizard({ initialReferralCode = '' }: OnboardingWizardP
   const currentStep = STEPS[step - 1]
 
   return (
-    <div className="min-h-screen bg-navy-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[#f0f3f9] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <span className="text-2xl font-bold text-navy">Mandato</span>
+          <span className="text-2xl font-bold text-[#1B2B4B]">Mandato</span>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 p-8">
@@ -307,7 +307,7 @@ export function OnboardingWizard({ initialReferralCode = '' }: OnboardingWizardP
 
           {/* Step label */}
           <div className="mb-6">
-            <p className="text-xs font-semibold text-orange uppercase tracking-widest mb-1">
+            <p className="text-xs font-semibold text-[#FF6B35] uppercase tracking-widest mb-1">
               {currentStep.title}
             </p>
             <p className="text-xs text-zinc-400">{currentStep.subtitle}</p>
@@ -327,7 +327,7 @@ export function OnboardingWizard({ initialReferralCode = '' }: OnboardingWizardP
 
         <p className="text-center text-xs text-zinc-400 mt-6">
           Besoin d&apos;aide ?{' '}
-          <a href="mailto:support@mandato.fr" className="text-navy font-medium hover:underline">
+          <a href="mailto:support@mandato.fr" className="text-[#1B2B4B] font-medium hover:underline">
             Contactez le support
           </a>
         </p>

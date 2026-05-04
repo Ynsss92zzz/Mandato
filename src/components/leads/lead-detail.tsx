@@ -29,7 +29,7 @@ const STATUS_COLORS: Record<LeadStatus, string> = {
   contacte: 'bg-amber-100 text-amber-700',
   qualifie: 'bg-purple-100 text-purple-700',
   rdv_planifie: 'bg-indigo-100 text-indigo-700',
-  proposition: 'bg-orange-100 text-orange-700',
+  proposition: 'bg-[#FF6B35]-100 text-[#FF6B35]-700',
   gagne: 'bg-green-100 text-green-700',
   perdu: 'bg-red-100 text-red-700',
 }
@@ -72,7 +72,7 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
       <p className="text-xs text-zinc-400 mb-0.5">{label}</p>
-      <p className="text-sm text-navy">{value}</p>
+      <p className="text-sm text-[#1B2B4B]">{value}</p>
     </div>
   )
 }
@@ -184,13 +184,13 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-navy/10 flex items-center justify-center flex-none">
-            <span className="text-base font-bold text-navy">
+          <div className="w-12 h-12 rounded-xl bg-[#1B2B4B]/10 flex items-center justify-center flex-none">
+            <span className="text-base font-bold text-[#1B2B4B]">
               {lead.first_name[0]}{lead.last_name?.[0] ?? ''}
             </span>
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-navy">
+            <h1 className="text-xl font-semibold text-[#1B2B4B]">
               {lead.first_name} {lead.last_name ?? ''}
             </h1>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -207,7 +207,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
           <select
             value={status}
             onChange={handleStatusChange}
-            className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-navy/20 ${STATUS_COLORS[status]}`}
+            className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1B2B4B]/20 ${STATUS_COLORS[status]}`}
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -235,7 +235,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
         <div className="lg:col-span-2 space-y-4">
           {/* Contact info */}
           <div className="bg-white rounded-xl border border-zinc-200 p-5">
-            <h2 className="text-sm font-semibold text-navy mb-4">Informations de contact</h2>
+            <h2 className="text-sm font-semibold text-[#1B2B4B] mb-4">Informations de contact</h2>
             <div className="grid grid-cols-2 gap-4">
               <InfoRow label="Email" value={lead.email} />
               <InfoRow label="Téléphone" value={lead.phone} />
@@ -257,7 +257,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
           {/* Notes */}
           <div className="bg-white rounded-xl border border-zinc-200 p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-navy">Notes internes</h2>
+              <h2 className="text-sm font-semibold text-[#1B2B4B]">Notes internes</h2>
               {notesSaved && (
                 <span className="text-xs text-green-600 font-medium">✓ Enregistré</span>
               )}
@@ -267,12 +267,12 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
               onChange={(e) => setNotesValue(e.target.value)}
               placeholder="Ajoutez des notes visibles uniquement par votre équipe..."
               rows={4}
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-navy placeholder-zinc-300 focus:outline-none focus:border-navy/50 focus:ring-2 focus:ring-navy/10 resize-none transition-colors"
+              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10 resize-none transition-colors"
             />
             <button
               onClick={handleSaveNotes}
               disabled={isSavingNotes}
-              className="mt-2 px-3 py-1.5 text-xs font-medium text-white bg-navy rounded-lg hover:bg-navy-light transition-colors disabled:opacity-60"
+              className="mt-2 px-3 py-1.5 text-xs font-medium text-white bg-[#1B2B4B] rounded-lg hover:bg-[#2D4270] transition-colors disabled:opacity-60"
             >
               {isSavingNotes ? 'Enregistrement...' : 'Enregistrer les notes'}
             </button>
@@ -280,12 +280,12 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
 
           {/* Draft message */}
           <div className="bg-white rounded-xl border border-zinc-200 p-5">
-            <h2 className="text-sm font-semibold text-navy mb-4">Rédiger un message IA</h2>
+            <h2 className="text-sm font-semibold text-[#1B2B4B] mb-4">Rédiger un message IA</h2>
             <div className="flex items-center gap-3 mb-3">
               <select
                 value={draftChannel}
                 onChange={(e) => setDraftChannel(e.target.value as MessageChannel)}
-                className="border border-zinc-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:border-navy/50 focus:ring-2 focus:ring-navy/10"
+                className="border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10"
               >
                 {CHANNELS.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -294,7 +294,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
               <button
                 onClick={handleDraftMessage}
                 disabled={isDrafting}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-orange rounded-lg hover:bg-orange-light transition-colors disabled:opacity-60"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-[#FF6B35] rounded-lg hover:bg-[#FF8C5A] transition-colors disabled:opacity-60"
               >
                 {isDrafting ? (
                   <>
@@ -319,7 +319,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
               value={draftContext}
               onChange={(e) => setDraftContext(e.target.value)}
               placeholder="Contexte supplémentaire (optionnel)..."
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-navy placeholder-zinc-300 focus:outline-none focus:border-navy/50 focus:ring-2 focus:ring-navy/10 mb-3"
+              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10 mb-3"
             />
 
             {draftError && (
@@ -332,12 +332,12 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                   <p className="text-xs font-medium text-zinc-500">Message généré</p>
                   <button
                     onClick={() => navigator.clipboard.writeText(draftedMessage)}
-                    className="text-xs text-zinc-400 hover:text-navy transition-colors"
+                    className="text-xs text-zinc-400 hover:text-[#1B2B4B] transition-colors"
                   >
                     Copier
                   </button>
                 </div>
-                <p className="text-sm text-navy leading-relaxed whitespace-pre-wrap">{draftedMessage}</p>
+                <p className="text-sm text-[#1B2B4B] leading-relaxed whitespace-pre-wrap">{draftedMessage}</p>
               </div>
             )}
           </div>
@@ -347,11 +347,11 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-zinc-200 p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-navy">Analyse IA</h2>
+              <h2 className="text-sm font-semibold text-[#1B2B4B]">Analyse IA</h2>
               <button
                 onClick={handleQualify}
                 disabled={isQualifying}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-orange border border-orange/20 rounded-lg hover:bg-orange/5 transition-colors disabled:opacity-60"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#FF6B35] border border-[#FF6B35]/20 rounded-lg hover:bg-[#FF6B35]/5 transition-colors disabled:opacity-60"
               >
                 {isQualifying ? (
                   <>
@@ -389,24 +389,24 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
               <div className="space-y-3">
                 <div>
                   <p className="text-xs text-zinc-400 mb-0.5">Intention</p>
-                  <p className="text-sm font-medium text-navy">{INTENTION_LABELS[aiAnalysis.intention] ?? aiAnalysis.intention}</p>
+                  <p className="text-sm font-medium text-[#1B2B4B]">{INTENTION_LABELS[aiAnalysis.intention] ?? aiAnalysis.intention}</p>
                 </div>
                 <div>
                   <p className="text-xs text-zinc-400 mb-0.5">Urgence</p>
-                  <p className="text-sm font-medium text-navy">{URGENCE_LABELS[aiAnalysis.urgence] ?? aiAnalysis.urgence}</p>
+                  <p className="text-sm font-medium text-[#1B2B4B]">{URGENCE_LABELS[aiAnalysis.urgence] ?? aiAnalysis.urgence}</p>
                 </div>
                 {aiAnalysis.budget_estime && (
                   <div>
                     <p className="text-xs text-zinc-400 mb-0.5">Budget estimé</p>
-                    <p className="text-sm font-medium text-navy">{aiAnalysis.budget_estime} €</p>
+                    <p className="text-sm font-medium text-[#1B2B4B]">{aiAnalysis.budget_estime} €</p>
                   </div>
                 )}
                 <div className="pt-2 border-t border-zinc-100">
                   <p className="text-xs text-zinc-400 mb-1">Profil</p>
                   <p className="text-xs text-zinc-600 leading-relaxed">{aiAnalysis.profil}</p>
                 </div>
-                <div className="bg-orange/5 border border-orange/10 rounded-lg p-3">
-                  <p className="text-xs font-medium text-orange mb-1">Recommandation</p>
+                <div className="bg-[#FF6B35]/5 border border-[#FF6B35]/10 rounded-lg p-3">
+                  <p className="text-xs font-medium text-[#FF6B35] mb-1">Recommandation</p>
                   <p className="text-xs text-zinc-700 leading-relaxed">{aiAnalysis.recommandation}</p>
                 </div>
               </div>
@@ -428,7 +428,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
               <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Tags</h2>
               <div className="flex flex-wrap gap-1.5">
                 {lead.tags.map((tag) => (
-                  <span key={tag} className="text-xs px-2 py-1 bg-navy/5 text-navy rounded-full">
+                  <span key={tag} className="text-xs px-2 py-1 bg-[#1B2B4B]/5 text-[#1B2B4B] rounded-full">
                     {tag}
                   </span>
                 ))}
@@ -455,7 +455,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 className="text-base font-semibold text-navy mb-2">Supprimer ce lead ?</h3>
+            <h3 className="text-base font-semibold text-[#1B2B4B] mb-2">Supprimer ce lead ?</h3>
             <p className="text-sm text-zinc-500 mb-5">
               Cette action est irréversible. Toutes les données associées à ce lead seront supprimées.
             </p>

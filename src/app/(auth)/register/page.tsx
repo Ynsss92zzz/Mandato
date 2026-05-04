@@ -15,7 +15,7 @@ export default async function RegisterPage({
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-navy mb-1">Créer votre compte</h1>
+        <h1 className="text-2xl font-semibold text-[#1B2B4B] mb-1">Créer votre compte</h1>
         <p className="text-zinc-500 text-sm">
           {hasRef ? 'Essai gratuit 30 jours — code de parrainage appliqué 🎁' : 'Essai gratuit 14 jours — sans carte bancaire'}
         </p>
@@ -38,7 +38,7 @@ export default async function RegisterPage({
 
       <p className="text-zinc-400 text-center text-sm mt-6">
         Déjà un compte ?{' '}
-        <Link href="/login" className="text-orange font-medium hover:underline">
+        <Link href="/login" className="text-[#FF6B35] font-medium hover:underline">
           Se connecter
         </Link>
       </p>

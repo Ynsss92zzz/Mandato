@@ -19,7 +19,7 @@ const SOURCE_COLORS: Record<LeadSource, string> = {
   widget: 'bg-blue-100 text-blue-700',
   manuel: 'bg-zinc-100 text-zinc-600',
   seloger: 'bg-green-100 text-green-700',
-  leboncoin: 'bg-orange-100 text-orange-700',
+  leboncoin: 'bg-[#FF6B35]-100 text-[#FF6B35]-700',
   logicimmo: 'bg-purple-100 text-purple-700',
   import: 'bg-amber-100 text-amber-700',
   autre: 'bg-zinc-100 text-zinc-500',
@@ -55,10 +55,10 @@ export function LeadCard({
       draggable
       onDragStart={(e) => onDragStart(e, lead.id)}
       onClick={() => onClick(lead)}
-      className="bg-white rounded-lg border border-zinc-200 p-3 cursor-grab active:cursor-grabbing hover:border-navy/30 hover:shadow-sm transition-all select-none group"
+      className="bg-white rounded-lg border border-zinc-200 p-3 cursor-grab active:cursor-grabbing hover:border-[#1B2B4B]/30 hover:shadow-sm transition-all select-none group"
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="text-sm font-semibold text-navy truncate leading-tight">{fullName}</p>
+        <p className="text-sm font-semibold text-[#1B2B4B] truncate leading-tight">{fullName}</p>
         <ScoreBadge score={lead.ai_score} />
       </div>
 

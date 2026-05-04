@@ -50,16 +50,16 @@ export function SequenceList({ sequences }: { sequences: SequenceWithCount[] }) 
   if (sequences.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-zinc-200 flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-14 h-14 bg-navy-50 rounded-2xl flex items-center justify-center mb-4">
-          <svg className="w-7 h-7 text-navy/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-14 h-14 bg-[#f0f3f9] rounded-2xl flex items-center justify-center mb-4">
+          <svg className="w-7 h-7 text-[#1B2B4B]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h7m3 4l3-3m0 0l3 3m-3-3v8" />
           </svg>
         </div>
-        <p className="text-sm font-medium text-navy mb-1">Aucune séquence</p>
+        <p className="text-sm font-medium text-[#1B2B4B] mb-1">Aucune séquence</p>
         <p className="text-xs text-zinc-400 mb-5">Créez votre première séquence de relances automatiques</p>
         <button
           onClick={() => router.push('/sequences/new')}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange rounded-lg hover:bg-orange-light transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#FF6B35] rounded-lg hover:bg-[#FF8C5A] transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -84,7 +84,7 @@ export function SequenceList({ sequences }: { sequences: SequenceWithCount[] }) 
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
-                  <h3 className="text-base font-semibold text-navy truncate">{seq.name}</h3>
+                  <h3 className="text-base font-semibold text-[#1B2B4B] truncate">{seq.name}</h3>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ${cfg.color}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                     {cfg.label}
@@ -145,7 +145,7 @@ export function SequenceList({ sequences }: { sequences: SequenceWithCount[] }) 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeletingId(null)} />
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 className="text-base font-semibold text-navy mb-2">Supprimer la séquence ?</h3>
+            <h3 className="text-base font-semibold text-[#1B2B4B] mb-2">Supprimer la séquence ?</h3>
             <p className="text-sm text-zinc-500 mb-5">
               Toutes les étapes et inscriptions associées seront supprimées. Cette action est irréversible.
             </p>

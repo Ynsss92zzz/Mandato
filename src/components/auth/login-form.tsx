@@ -50,7 +50,7 @@ export function LoginForm() {
             autoComplete="email"
             required
             placeholder="vous@agence.fr"
-            className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy transition"
+            className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B2B4B]/20 focus:border-[#1B2B4B] transition"
           />
           <FieldError messages={state?.errors?.email} />
         </div>
@@ -60,7 +60,7 @@ export function LoginForm() {
             <label htmlFor="password" className="text-sm font-medium text-zinc-700">
               Mot de passe
             </label>
-            <a href="/forgot-password" className="text-xs text-orange hover:underline">
+            <a href="/forgot-password" className="text-xs text-[#FF6B35] hover:underline">
               Oublié ?
             </a>
           </div>
@@ -71,7 +71,7 @@ export function LoginForm() {
             autoComplete="current-password"
             required
             placeholder="••••••••"
-            className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy transition"
+            className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B2B4B]/20 focus:border-[#1B2B4B] transition"
           />
           <FieldError messages={state?.errors?.password} />
         </div>
@@ -79,7 +79,7 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full bg-navy hover:bg-navy-light disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+          className="w-full bg-[#1B2B4B] hover:bg-[#2D4270] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
         >
           {isPending ? 'Connexion…' : 'Se connecter'}
         </button>

@@ -22,7 +22,7 @@ const DELAY_PRESETS = [
 
 const VARIABLES = ['{{prenom}}', '{{nom}}', '{{email}}', '{{telephone}}']
 
-const inputCls = 'w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-navy placeholder-zinc-300 focus:outline-none focus:border-navy/50 focus:ring-2 focus:ring-navy/10 transition-colors'
+const inputCls = 'w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10 transition-colors'
 
 interface StepModalProps {
   step?: StepDraft & { index?: number }
@@ -63,7 +63,7 @@ export function StepModal({ step, onSave, onClose }: StepModalProps) {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 sticky top-0 bg-white rounded-t-2xl">
-          <h2 className="text-base font-semibold text-navy">
+          <h2 className="text-base font-semibold text-[#1B2B4B]">
             {isEdit ? "Modifier l'étape" : 'Ajouter une étape'}
           </h2>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 transition-colors">
@@ -85,7 +85,7 @@ export function StepModal({ step, onSave, onClose }: StepModalProps) {
                   onClick={() => setChannel(c.value)}
                   className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 text-xs font-medium transition-colors ${
                     channel === c.value
-                      ? 'border-orange bg-orange/5 text-orange'
+                      ? 'border-[#FF6B35] bg-[#FF6B35]/5 text-[#FF6B35]'
                       : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
                   }`}
                 >
@@ -109,7 +109,7 @@ export function StepModal({ step, onSave, onClose }: StepModalProps) {
                   onClick={() => { setDelayHours(p.value); setCustomDelay(false) }}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                     !customDelay && delayHours === p.value
-                      ? 'border-orange bg-orange/5 text-orange'
+                      ? 'border-[#FF6B35] bg-[#FF6B35]/5 text-[#FF6B35]'
                       : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
                   }`}
                 >
@@ -120,7 +120,7 @@ export function StepModal({ step, onSave, onClose }: StepModalProps) {
                 type="button"
                 onClick={() => setCustomDelay(true)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                  customDelay ? 'border-orange bg-orange/5 text-orange' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                  customDelay ? 'border-[#FF6B35] bg-[#FF6B35]/5 text-[#FF6B35]' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
                 }`}
               >
                 Personnalisé
@@ -165,7 +165,7 @@ export function StepModal({ step, onSave, onClose }: StepModalProps) {
                 <button
                   type="button"
                   onClick={() => setIsAI(!isAI)}
-                  className={`relative w-8 h-4 rounded-full transition-colors ${isAI ? 'bg-orange' : 'bg-zinc-200'}`}
+                  className={`relative w-8 h-4 rounded-full transition-colors ${isAI ? 'bg-[#FF6B35]' : 'bg-zinc-200'}`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${isAI ? 'translate-x-4' : ''}`} />
                 </button>
@@ -191,7 +191,7 @@ export function StepModal({ step, onSave, onClose }: StepModalProps) {
                     key={v}
                     type="button"
                     onClick={() => insertVariable(v)}
-                    className="text-xs px-1.5 py-0.5 bg-navy/5 text-navy rounded hover:bg-navy/10 transition-colors font-mono"
+                    className="text-xs px-1.5 py-0.5 bg-[#1B2B4B]/5 text-[#1B2B4B] rounded hover:bg-[#1B2B4B]/10 transition-colors font-mono"
                   >
                     {v}
                   </button>
@@ -215,7 +215,7 @@ export function StepModal({ step, onSave, onClose }: StepModalProps) {
             <button
               type="button"
               onClick={handleSave}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-orange rounded-lg hover:bg-orange-light transition-colors"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-lg hover:bg-[#FF8C5A] transition-colors"
             >
               {isEdit ? "Enregistrer l'étape" : "Ajouter l'étape"}
             </button>

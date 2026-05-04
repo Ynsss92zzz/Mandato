@@ -13,18 +13,18 @@ function Hero() {
   return (
     <section className="relative bg-white overflow-hidden pt-16 pb-20 px-6">
       {/* Gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-navy-50 via-white to-orange/5 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#f0f3f9] via-white to-[#FF6B35]/5 pointer-events-none" />
 
       <div className="relative max-w-5xl mx-auto text-center">
-        <span className="inline-flex items-center gap-2 bg-orange/10 text-orange text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-orange animate-pulse" />
+        <span className="inline-flex items-center gap-2 bg-[#FF6B35]/10 text-[#FF6B35] text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
           Nouvelle fonctionnalité : Relances WhatsApp automatiques
         </span>
 
-        <h1 className="text-5xl md:text-6xl font-bold text-navy leading-tight tracking-tight mb-6">
+        <h1 className="text-5xl md:text-6xl font-bold text-[#1B2B4B] leading-tight tracking-tight mb-6">
           Ne perdez plus jamais
           <br />
-          <span className="text-orange">un lead immobilier</span>
+          <span className="text-[#FF6B35]">un lead immobilier</span>
         </h1>
 
         <p className="text-xl text-zinc-500 leading-relaxed max-w-2xl mx-auto mb-10">
@@ -35,13 +35,13 @@ function Hero() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
           <Link
             href="/register"
-            className="px-8 py-4 bg-orange hover:bg-orange-light text-white font-semibold rounded-xl transition-colors text-base shadow-lg shadow-orange/20"
+            className="px-8 py-4 bg-[#FF6B35] hover:bg-[#FF8C5A] text-white font-semibold rounded-xl transition-colors text-base shadow-lg shadow-[#FF6B35]/20"
           >
             Démarrer gratuitement — 14 jours
           </Link>
           <Link
             href="#fonctionnalites"
-            className="px-8 py-4 bg-navy-50 hover:bg-navy-100 text-navy font-semibold rounded-xl transition-colors text-base"
+            className="px-8 py-4 bg-[#f0f3f9] hover:bg-[#dce4f0] text-[#1B2B4B] font-semibold rounded-xl transition-colors text-base"
           >
             Voir comment ça marche →
           </Link>
@@ -51,7 +51,7 @@ function Hero() {
 
         {/* Dashboard mockup */}
         <div className="relative mx-auto max-w-4xl">
-          <div className="bg-white rounded-2xl border border-zinc-200 shadow-2xl shadow-navy/10 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-2xl shadow-[#1B2B4B]/10 overflow-hidden">
             {/* Browser chrome */}
             <div className="flex items-center gap-1.5 px-4 py-3 bg-zinc-50 border-b border-zinc-200">
               <div className="w-3 h-3 rounded-full bg-red-400" />
@@ -62,7 +62,7 @@ function Hero() {
               </div>
             </div>
             {/* Mockup content */}
-            <div className="p-6 bg-navy-50">
+            <div className="p-6 bg-[#f0f3f9]">
               <div className="grid grid-cols-4 gap-3 mb-5">
                 {[
                   { label: 'Leads ce mois', value: '47', trend: '+23%', color: 'bg-white' },
@@ -72,14 +72,14 @@ function Hero() {
                 ].map((card) => (
                   <div key={card.label} className={`${card.color} rounded-xl p-4 border border-zinc-200`}>
                     <p className="text-xs text-zinc-400 mb-1">{card.label}</p>
-                    <p className="text-2xl font-bold text-navy">{card.value}</p>
+                    <p className="text-2xl font-bold text-[#1B2B4B]">{card.value}</p>
                     <p className="text-xs text-green-600 font-medium mt-0.5">{card.trend}</p>
                   </div>
                 ))}
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2 bg-white rounded-xl border border-zinc-200 p-4">
-                  <p className="text-xs font-semibold text-navy mb-3">Pipeline leads</p>
+                  <p className="text-xs font-semibold text-[#1B2B4B] mb-3">Pipeline leads</p>
                   <div className="space-y-2">
                     {[
                       { name: 'Sophie Martin', status: 'qualifie', score: 8 },
@@ -88,10 +88,10 @@ function Hero() {
                     ].map((lead) => (
                       <div key={lead.name} className="flex items-center justify-between py-1.5 border-b border-zinc-50 last:border-0">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-navy flex items-center justify-center">
+                          <div className="w-7 h-7 rounded-full bg-[#1B2B4B] flex items-center justify-center">
                             <span className="text-xs text-white font-semibold">{lead.name[0]}</span>
                           </div>
-                          <span className="text-xs font-medium text-navy">{lead.name}</span>
+                          <span className="text-xs font-medium text-[#1B2B4B]">{lead.name}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
@@ -103,7 +103,7 @@ function Hero() {
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                  <p className="text-xs font-semibold text-navy mb-3">IA active</p>
+                  <p className="text-xs font-semibold text-[#1B2B4B] mb-3">IA active</p>
                   <div className="space-y-2.5">
                     {[
                       { label: 'Email envoyé', time: 'il y a 2m', dot: 'bg-green-400' },
@@ -113,7 +113,7 @@ function Hero() {
                       <div key={item.label} className="flex items-center gap-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${item.dot} flex-none`} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-navy">{item.label}</p>
+                          <p className="text-xs text-[#1B2B4B]">{item.label}</p>
                           <p className="text-xs text-zinc-400">{item.time}</p>
                         </div>
                       </div>
@@ -127,7 +127,7 @@ function Hero() {
           <div className="absolute -bottom-4 -right-4 bg-white rounded-xl shadow-lg border border-zinc-100 px-4 py-3 flex items-center gap-2.5">
             <span className="text-xl">✦</span>
             <div>
-              <p className="text-xs font-semibold text-navy">IA en action</p>
+              <p className="text-xs font-semibold text-[#1B2B4B]">IA en action</p>
               <p className="text-xs text-zinc-400">Lead qualifié en 30s</p>
             </div>
           </div>
@@ -141,7 +141,7 @@ function Hero() {
 
 function SocialProof() {
   return (
-    <section className="bg-navy py-10 px-6">
+    <section className="bg-[#1B2B4B] py-10 px-6">
       <div className="max-w-5xl mx-auto text-center">
         <p className="text-sm text-white/50 mb-6 uppercase tracking-widest font-medium">
           Déjà adopté par plus de 150 agents immobiliers
@@ -198,7 +198,7 @@ function Features() {
     <section id="fonctionnalites" className="py-20 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1B2B4B] mb-4">
             Tout ce dont vous avez besoin
           </h2>
           <p className="text-zinc-500 text-lg max-w-xl mx-auto">
@@ -210,10 +210,10 @@ function Features() {
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="bg-navy-50 rounded-2xl p-6 hover:shadow-md transition-shadow border border-transparent hover:border-zinc-200"
+              className="bg-[#f0f3f9] rounded-2xl p-6 hover:shadow-md transition-shadow border border-transparent hover:border-zinc-200"
             >
               <span className="text-3xl mb-4 block">{f.icon}</span>
-              <h3 className="text-base font-semibold text-navy mb-2">{f.title}</h3>
+              <h3 className="text-base font-semibold text-[#1B2B4B] mb-2">{f.title}</h3>
               <p className="text-sm text-zinc-500 leading-relaxed">{f.desc}</p>
             </div>
           ))}
@@ -245,10 +245,10 @@ function HowItWorks() {
   ]
 
   return (
-    <section className="py-20 px-6 bg-navy-50">
+    <section className="py-20 px-6 bg-[#f0f3f9]">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1B2B4B] mb-4">
             Opérationnel en 10 minutes
           </h2>
           <p className="text-zinc-500 text-lg">Pas de formation, pas de configuration complexe.</p>
@@ -261,10 +261,10 @@ function HowItWorks() {
                 <div className="hidden md:block absolute top-8 left-full w-full h-px bg-zinc-200 -translate-x-4 z-0" />
               )}
               <div className="relative z-10 bg-white rounded-2xl border border-zinc-200 p-6">
-                <div className="w-12 h-12 bg-orange rounded-xl flex items-center justify-center mb-5">
+                <div className="w-12 h-12 bg-[#FF6B35] rounded-xl flex items-center justify-center mb-5">
                   <span className="text-white font-bold text-sm">{step.num}</span>
                 </div>
-                <h3 className="text-base font-semibold text-navy mb-2">{step.title}</h3>
+                <h3 className="text-base font-semibold text-[#1B2B4B] mb-2">{step.title}</h3>
                 <p className="text-sm text-zinc-500 leading-relaxed">{step.desc}</p>
               </div>
             </div>
@@ -310,7 +310,7 @@ function Pricing() {
     <section id="tarifs" className="py-20 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1B2B4B] mb-4">
             Des tarifs clairs, sans surprise
           </h2>
           <p className="text-zinc-500 text-lg">14 jours d&apos;essai gratuit sur tous les plans</p>
@@ -324,19 +324,19 @@ function Pricing() {
                 key={plan.id}
                 className={`rounded-2xl border p-8 flex flex-col ${
                   isPro
-                    ? 'border-orange bg-navy text-white shadow-xl shadow-navy/20 relative'
+                    ? 'border-[#FF6B35] bg-[#1B2B4B] text-white shadow-xl shadow-[#1B2B4B]/20 relative'
                     : 'border-zinc-200 bg-white'
                 }`}
               >
                 {isPro && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-orange text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    <span className="bg-[#FF6B35] text-white text-xs font-semibold px-3 py-1 rounded-full">
                       Le plus populaire
                     </span>
                   </div>
                 )}
                 <div className="mb-6">
-                  <h3 className={`text-lg font-bold mb-1 ${isPro ? 'text-white' : 'text-navy'}`}>
+                  <h3 className={`text-lg font-bold mb-1 ${isPro ? 'text-white' : 'text-[#1B2B4B]'}`}>
                     {plan.name}
                   </h3>
                   <p className={`text-sm ${isPro ? 'text-white/60' : 'text-zinc-400'}`}>
@@ -344,7 +344,7 @@ function Pricing() {
                   </p>
                 </div>
                 <div className="mb-8">
-                  <span className={`text-4xl font-bold ${isPro ? 'text-white' : 'text-navy'}`}>
+                  <span className={`text-4xl font-bold ${isPro ? 'text-white' : 'text-[#1B2B4B]'}`}>
                     {plan.price}€
                   </span>
                   <span className={`text-sm ml-1 ${isPro ? 'text-white/50' : 'text-zinc-400'}`}>/mois</span>
@@ -352,7 +352,7 @@ function Pricing() {
                 <ul className="space-y-3 flex-1 mb-8">
                   {(planFeatures[plan.id] ?? []).map((feat) => (
                     <li key={feat} className="flex items-start gap-2.5 text-sm">
-                      <svg className={`w-4 h-4 flex-none mt-0.5 ${isPro ? 'text-orange' : 'text-green-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <svg className={`w-4 h-4 flex-none mt-0.5 ${isPro ? 'text-[#FF6B35]' : 'text-green-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                       <span className={isPro ? 'text-white/80' : 'text-zinc-600'}>{feat}</span>
@@ -363,8 +363,8 @@ function Pricing() {
                   href={`/register?plan=${plan.id}`}
                   className={`text-center py-3.5 rounded-xl font-semibold text-sm transition-colors ${
                     isPro
-                      ? 'bg-orange hover:bg-orange-light text-white'
-                      : 'bg-navy-50 hover:bg-navy text-navy hover:text-white'
+                      ? 'bg-[#FF6B35] hover:bg-[#FF8C5A] text-white'
+                      : 'bg-[#f0f3f9] hover:bg-[#1B2B4B] text-[#1B2B4B] hover:text-white'
                   }`}
                 >
                   Démarrer l&apos;essai gratuit
@@ -376,7 +376,7 @@ function Pricing() {
 
         <p className="text-center text-sm text-zinc-400 mt-8">
           Besoin d&apos;une offre sur-mesure ?{' '}
-          <a href="mailto:hello@mandato.fr" className="text-navy font-medium hover:underline">
+          <a href="mailto:hello@mandato.fr" className="text-[#1B2B4B] font-medium hover:underline">
             Contactez-nous
           </a>
         </p>
@@ -413,10 +413,10 @@ const TESTIMONIALS = [
 
 function Testimonials() {
   return (
-    <section className="py-20 px-6 bg-navy-50">
+    <section className="py-20 px-6 bg-[#f0f3f9]">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1B2B4B] mb-4">
             Ils ont transformé leur activité
           </h2>
           <p className="text-zinc-500 text-lg">Des vrais résultats, mesurables dès le 1er mois</p>
@@ -436,11 +436,11 @@ function Testimonials() {
                 &ldquo;{t.quote}&rdquo;
               </p>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-navy flex items-center justify-center flex-none">
+                <div className="w-9 h-9 rounded-full bg-[#1B2B4B] flex items-center justify-center flex-none">
                   <span className="text-xs font-semibold text-white">{t.avatar}</span>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-navy">{t.name}</p>
+                  <p className="text-sm font-semibold text-[#1B2B4B]">{t.name}</p>
                   <p className="text-xs text-zinc-400">{t.role}</p>
                 </div>
               </div>
@@ -486,7 +486,7 @@ function FAQ() {
     <section id="faq" className="py-20 px-6 bg-white">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1B2B4B] mb-4">
             Questions fréquentes
           </h2>
         </div>
@@ -495,10 +495,10 @@ function FAQ() {
           {FAQ_ITEMS.map((item) => (
             <details
               key={item.q}
-              className="group bg-navy-50 rounded-xl border border-zinc-200 overflow-hidden"
+              className="group bg-[#f0f3f9] rounded-xl border border-zinc-200 overflow-hidden"
             >
               <summary className="flex items-center justify-between gap-4 px-6 py-4 cursor-pointer list-none select-none">
-                <span className="text-sm font-semibold text-navy">{item.q}</span>
+                <span className="text-sm font-semibold text-[#1B2B4B]">{item.q}</span>
                 <svg
                   className="w-5 h-5 text-zinc-400 flex-none transition-transform group-open:rotate-180"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -521,7 +521,7 @@ function FAQ() {
 
 function CTAFinal() {
   return (
-    <section className="py-20 px-6 bg-navy">
+    <section className="py-20 px-6 bg-[#1B2B4B]">
       <div className="max-w-3xl mx-auto text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
           Prêt à automatiser votre prospection ?
@@ -532,7 +532,7 @@ function CTAFinal() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/register"
-            className="px-8 py-4 bg-orange hover:bg-orange-light text-white font-semibold rounded-xl transition-colors text-base"
+            className="px-8 py-4 bg-[#FF6B35] hover:bg-[#FF8C5A] text-white font-semibold rounded-xl transition-colors text-base"
           >
             Démarrer gratuitement — 14 jours
           </Link>

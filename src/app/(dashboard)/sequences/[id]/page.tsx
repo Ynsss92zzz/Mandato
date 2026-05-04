@@ -52,7 +52,7 @@ export default async function SequenceEditorPage({
       <div className="mb-5">
         <Link
           href="/sequences"
-          className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-navy transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-[#1B2B4B] transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -62,7 +62,7 @@ export default async function SequenceEditorPage({
       </div>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-navy">
+        <h1 className="text-2xl font-semibold text-[#1B2B4B]">
           {id === 'new' ? 'Nouvelle séquence' : sequence?.name ?? 'Éditeur de séquence'}
         </h1>
         {id !== 'new' && (

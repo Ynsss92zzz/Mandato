@@ -52,7 +52,7 @@ function KPICard({
           </span>
         )}
       </div>
-      <p className="text-3xl font-bold text-navy mb-0.5">{value}</p>
+      <p className="text-3xl font-bold text-[#1B2B4B] mb-0.5">{value}</p>
       <p className="text-sm text-zinc-400">{label}</p>
       {sub && <p className="text-xs text-zinc-300 mt-0.5">{sub}</p>}
     </div>
@@ -68,7 +68,7 @@ function BarChart({ data }: { data: AnalyticsData['weeklyTrend'] }) {
         <div key={i} className="flex-1 flex flex-col items-center gap-1">
           <span className="text-xs text-zinc-400 font-medium">{d.count}</span>
           <div
-            className="w-full rounded-t-lg bg-navy transition-all"
+            className="w-full rounded-t-lg bg-[#1B2B4B] transition-all"
             style={{ height: `${Math.max((d.count / max) * 96, d.count > 0 ? 8 : 2)}px` }}
           />
           <span className="text-xs text-zinc-400 whitespace-nowrap">{d.label}</span>
@@ -108,7 +108,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-navy">Analytics</h1>
+          <h1 className="text-2xl font-semibold text-[#1B2B4B]">Analytics</h1>
           <p className="text-sm text-zinc-400 mt-0.5">Tableau de bord de performance</p>
         </div>
         <div className="flex items-center gap-2 print:hidden">
@@ -124,7 +124,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
           </button>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-navy rounded-lg hover:bg-navy-light transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[#1B2B4B] rounded-lg hover:bg-[#2D4270] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -173,7 +173,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Sources */}
         <div className="bg-white rounded-xl border border-zinc-200 p-5">
-          <h2 className="text-sm font-semibold text-navy mb-4">Sources de leads</h2>
+          <h2 className="text-sm font-semibold text-[#1B2B4B] mb-4">Sources de leads</h2>
           <div className="space-y-3">
             {data.bySource.length === 0 && (
               <p className="text-sm text-zinc-400">Aucune donnée</p>
@@ -188,7 +188,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
                 </div>
                 <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-orange rounded-full transition-all"
+                    className="h-full bg-[#FF6B35] rounded-full transition-all"
                     style={{ width: `${s.percent}%` }}
                   />
                 </div>
@@ -199,7 +199,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
 
         {/* Funnel */}
         <div className="bg-white rounded-xl border border-zinc-200 p-5">
-          <h2 className="text-sm font-semibold text-navy mb-4">Entonnoir de conversion</h2>
+          <h2 className="text-sm font-semibold text-[#1B2B4B] mb-4">Entonnoir de conversion</h2>
           <div className="space-y-2">
             {data.byStatus.length === 0 && (
               <p className="text-sm text-zinc-400">Aucune donnée</p>
@@ -209,10 +209,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
                 <span className="text-xs text-zinc-500 w-28 flex-none truncate">{s.label}</span>
                 <div className="flex-1 h-6 bg-zinc-50 rounded-lg overflow-hidden">
                   <div
-                    className="h-full bg-navy/10 rounded-lg flex items-center px-2 transition-all"
+                    className="h-full bg-[#1B2B4B]/10 rounded-lg flex items-center px-2 transition-all"
                     style={{ width: `${Math.max(s.percent, 4)}%` }}
                   >
-                    <span className="text-xs font-medium text-navy">{s.count}</span>
+                    <span className="text-xs font-medium text-[#1B2B4B]">{s.count}</span>
                   </div>
                 </div>
               </div>
@@ -223,7 +223,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
 
       {/* Weekly trend */}
       <div className="bg-white rounded-xl border border-zinc-200 p-5">
-        <h2 className="text-sm font-semibold text-navy mb-5">Leads par semaine (8 dernières semaines)</h2>
+        <h2 className="text-sm font-semibold text-[#1B2B4B] mb-5">Leads par semaine (8 dernières semaines)</h2>
         <BarChart data={data.weeklyTrend} />
       </div>
 
@@ -231,7 +231,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
       {data.agentStats && data.agentStats.length > 0 && (
         <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-zinc-100">
-            <h2 className="text-sm font-semibold text-navy">Performance par agent</h2>
+            <h2 className="text-sm font-semibold text-[#1B2B4B]">Performance par agent</h2>
           </div>
           <table className="w-full">
             <thead>
@@ -246,14 +246,14 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
               {data.agentStats.map((agent, i) => (
                 <tr key={i} className="hover:bg-zinc-50/50 transition-colors">
                   <td className="px-5 py-3.5">
-                    <p className="text-sm font-medium text-navy">{agent.name}</p>
+                    <p className="text-sm font-medium text-[#1B2B4B]">{agent.name}</p>
                     <p className="text-xs text-zinc-400">{agent.email}</p>
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className="text-sm text-navy">{agent.total}</span>
+                    <span className="text-sm text-[#1B2B4B]">{agent.total}</span>
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className="text-sm text-navy">{agent.won}</span>
+                    <span className="text-sm text-[#1B2B4B]">{agent.won}</span>
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">

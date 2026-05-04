@@ -11,7 +11,7 @@ const STATUS_CONFIG: Record<LeadStatus, { label: string; color: string }> = {
   contacte: { label: 'Contacté', color: 'bg-amber-100 text-amber-700' },
   qualifie: { label: 'Qualifié', color: 'bg-purple-100 text-purple-700' },
   rdv_planifie: { label: 'RDV planifié', color: 'bg-indigo-100 text-indigo-700' },
-  proposition: { label: 'Proposition', color: 'bg-orange-100 text-orange-700' },
+  proposition: { label: 'Proposition', color: 'bg-[#FF6B35]-100 text-[#FF6B35]-700' },
   gagne: { label: 'Gagné', color: 'bg-green-100 text-green-700' },
   perdu: { label: 'Perdu', color: 'bg-red-100 text-red-700' },
 }
@@ -58,7 +58,7 @@ export function LeadList({
         <svg className="w-10 h-10 text-zinc-200 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        <p className="text-sm font-medium text-navy">Aucun lead</p>
+        <p className="text-sm font-medium text-[#1B2B4B]">Aucun lead</p>
         <p className="text-xs text-zinc-400 mt-1">Ajoutez votre premier lead pour commencer</p>
       </div>
     )
@@ -94,13 +94,13 @@ export function LeadList({
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-navy/10 flex items-center justify-center flex-none">
-                        <span className="text-xs font-semibold text-navy">
+                      <div className="w-8 h-8 rounded-full bg-[#1B2B4B]/10 flex items-center justify-center flex-none">
+                        <span className="text-xs font-semibold text-[#1B2B4B]">
                           {getInitials(lead.first_name, lead.last_name)}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-navy truncate">
+                        <p className="font-medium text-[#1B2B4B] truncate">
                           {lead.first_name} {lead.last_name ?? ''}
                         </p>
                         {lead.location_desired && (
@@ -143,7 +143,7 @@ export function LeadList({
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => onEdit(lead)}
-                      className="text-xs text-zinc-400 hover:text-navy px-2 py-1 rounded hover:bg-zinc-100 transition-colors"
+                      className="text-xs text-zinc-400 hover:text-[#1B2B4B] px-2 py-1 rounded hover:bg-zinc-100 transition-colors"
                       title="Modifier"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

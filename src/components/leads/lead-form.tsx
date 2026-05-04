@@ -33,7 +33,7 @@ interface LeadFormProps {
   onClose: () => void
 }
 
-const inputCls = 'w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-navy placeholder-zinc-300 focus:outline-none focus:border-navy/50 focus:ring-2 focus:ring-navy/10 transition-colors'
+const inputCls = 'w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10 transition-colors'
 const labelCls = 'block text-xs font-medium text-zinc-600 mb-1'
 
 export function LeadForm({ lead, onSuccess, onClose }: LeadFormProps) {
@@ -60,7 +60,7 @@ export function LeadForm({ lead, onSuccess, onClose }: LeadFormProps) {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 sticky top-0 bg-white rounded-t-2xl">
-          <h2 className="text-base font-semibold text-navy">
+          <h2 className="text-base font-semibold text-[#1B2B4B]">
             {isEdit ? 'Modifier le lead' : 'Nouveau lead'}
           </h2>
           <button
@@ -223,7 +223,7 @@ export function LeadForm({ lead, onSuccess, onClose }: LeadFormProps) {
             <button
               type="submit"
               disabled={isPending}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-orange rounded-lg hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-lg hover:bg-[#FF8C5A] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isPending ? 'Enregistrement...' : isEdit ? 'Enregistrer' : 'Créer le lead'}
             </button>

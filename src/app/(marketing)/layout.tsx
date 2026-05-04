@@ -4,18 +4,18 @@ function Nav() {
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-zinc-100">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-navy tracking-tight">
+        <Link href="/" className="text-xl font-bold text-[#1B2B4B] tracking-tight">
           Mandato
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          <Link href="/#fonctionnalites" className="text-sm text-zinc-500 hover:text-navy transition-colors">
+          <Link href="/#fonctionnalites" className="text-sm text-zinc-500 hover:text-[#1B2B4B] transition-colors">
             Fonctionnalités
           </Link>
-          <Link href="/pricing" className="text-sm text-zinc-500 hover:text-navy transition-colors">
+          <Link href="/pricing" className="text-sm text-zinc-500 hover:text-[#1B2B4B] transition-colors">
             Tarifs
           </Link>
-          <Link href="/#faq" className="text-sm text-zinc-500 hover:text-navy transition-colors">
+          <Link href="/#faq" className="text-sm text-zinc-500 hover:text-[#1B2B4B] transition-colors">
             FAQ
           </Link>
         </nav>
@@ -23,13 +23,13 @@ function Nav() {
         <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className="text-sm font-medium text-zinc-600 hover:text-navy transition-colors hidden md:block"
+            className="text-sm font-medium text-zinc-600 hover:text-[#1B2B4B] transition-colors hidden md:block"
           >
             Connexion
           </Link>
           <Link
             href="/register"
-            className="text-sm font-semibold text-white bg-orange hover:bg-orange-light px-4 py-2 rounded-lg transition-colors"
+            className="text-sm font-semibold text-white bg-[#FF6B35] hover:bg-[#FF8C5A] px-4 py-2 rounded-lg transition-colors"
           >
             Essai gratuit
           </Link>
@@ -41,7 +41,7 @@ function Nav() {
 
 function Footer() {
   return (
-    <footer className="bg-navy text-white py-12 px-6">
+    <footer className="bg-[#1B2B4B] text-white py-12 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           <div className="col-span-2 md:col-span-1">

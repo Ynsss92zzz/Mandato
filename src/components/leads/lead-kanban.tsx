@@ -14,7 +14,7 @@ const COLUMNS: { status: LeadStatus; label: string; dotColor: string }[] = [
   { status: 'contacte', label: 'Contacté', dotColor: 'bg-amber-400' },
   { status: 'qualifie', label: 'Qualifié', dotColor: 'bg-purple-400' },
   { status: 'rdv_planifie', label: 'RDV planifié', dotColor: 'bg-indigo-400' },
-  { status: 'proposition', label: 'Proposition', dotColor: 'bg-orange-400' },
+  { status: 'proposition', label: 'Proposition', dotColor: 'bg-[#FF6B35]-400' },
   { status: 'gagne', label: 'Gagné', dotColor: 'bg-green-400' },
   { status: 'perdu', label: 'Perdu', dotColor: 'bg-red-400' },
 ]
@@ -89,12 +89,12 @@ export function LeadKanban({
   if (leads.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="w-16 h-16 bg-navy-50 rounded-2xl flex items-center justify-center mb-4">
-          <svg className="w-8 h-8 text-navy/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-16 h-16 bg-[#f0f3f9] rounded-2xl flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-[#1B2B4B]/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </div>
-        <p className="text-sm font-medium text-navy">Aucun lead pour le moment</p>
+        <p className="text-sm font-medium text-[#1B2B4B]">Aucun lead pour le moment</p>
         <p className="text-xs text-zinc-400 mt-1">Ajoutez votre premier lead pour commencer</p>
       </div>
     )
@@ -110,7 +110,7 @@ export function LeadKanban({
           <div
             key={status}
             className={`flex-none w-60 flex flex-col rounded-xl border-2 transition-colors duration-150 ${
-              isOver ? 'border-orange bg-orange/5' : 'border-transparent bg-navy-50/60'
+              isOver ? 'border-[#FF6B35] bg-[#FF6B35]/5' : 'border-transparent bg-[#f0f3f9]/60'
             }`}
             onDragOver={(e) => handleDragOver(e, status)}
             onDragLeave={handleDragLeave}
@@ -120,7 +120,7 @@ export function LeadKanban({
             <div className="px-3 py-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${dotColor}`} />
-                <h3 className="text-xs font-semibold text-navy uppercase tracking-wide">{label}</h3>
+                <h3 className="text-xs font-semibold text-[#1B2B4B] uppercase tracking-wide">{label}</h3>
               </div>
               <span className="text-xs text-zinc-400 font-medium bg-white px-1.5 py-0.5 rounded-full border border-zinc-200">
                 {columnLeads.length}
@@ -143,7 +143,7 @@ export function LeadKanban({
 
               {columnLeads.length === 0 && (
                 <div className={`flex items-center justify-center h-20 rounded-lg border-2 border-dashed transition-colors ${
-                  isOver ? 'border-orange text-orange' : 'border-zinc-200 text-zinc-300'
+                  isOver ? 'border-[#FF6B35] text-[#FF6B35]' : 'border-zinc-200 text-zinc-300'
                 }`}>
                   <p className="text-xs font-medium">Déposer ici</p>
                 </div>

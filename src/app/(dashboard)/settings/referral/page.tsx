@@ -10,7 +10,7 @@ export default async function ReferralPage() {
   if ('error' in info) {
     return (
       <div>
-        <h1 className="text-2xl font-semibold text-navy mb-6">Programme de parrainage</h1>
+        <h1 className="text-2xl font-semibold text-[#1B2B4B] mb-6">Programme de parrainage</h1>
         <p className="text-sm text-red-500">{info.error}</p>
       </div>
     )

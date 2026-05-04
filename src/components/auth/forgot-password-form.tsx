@@ -36,7 +36,7 @@ export function ForgotPasswordForm() {
           autoComplete="email"
           required
           placeholder="vous@agence.fr"
-          className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy transition"
+          className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B2B4B]/20 focus:border-[#1B2B4B] transition"
         />
         {state?.errors?.email && (
           <p className="text-red-500 text-xs mt-1">{state.errors.email[0]}</p>
@@ -46,7 +46,7 @@ export function ForgotPasswordForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-navy hover:bg-navy-light disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+        className="w-full bg-[#1B2B4B] hover:bg-[#2D4270] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
       >
         {isPending ? 'Envoi…' : 'Envoyer le lien de réinitialisation'}
       </button>

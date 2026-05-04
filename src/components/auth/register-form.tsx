@@ -44,7 +44,7 @@ export function RegisterForm({ referralCode = '' }: { referralCode?: string }) {
           autoComplete="name"
           required
           placeholder="Jean Dupont"
-          className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy transition"
+          className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B2B4B]/20 focus:border-[#1B2B4B] transition"
         />
         <FieldError messages={state?.errors?.full_name} />
       </div>
@@ -60,7 +60,7 @@ export function RegisterForm({ referralCode = '' }: { referralCode?: string }) {
           autoComplete="email"
           required
           placeholder="vous@agence.fr"
-          className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy transition"
+          className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B2B4B]/20 focus:border-[#1B2B4B] transition"
         />
         <FieldError messages={state?.errors?.email} />
       </div>
@@ -76,7 +76,7 @@ export function RegisterForm({ referralCode = '' }: { referralCode?: string }) {
           autoComplete="new-password"
           required
           placeholder="8 caractères min, 1 majuscule, 1 chiffre"
-          className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy transition"
+          className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B2B4B]/20 focus:border-[#1B2B4B] transition"
         />
         <FieldError messages={state?.errors?.password} />
       </div>
@@ -84,7 +84,7 @@ export function RegisterForm({ referralCode = '' }: { referralCode?: string }) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-orange hover:bg-orange-light disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+        className="w-full bg-[#FF6B35] hover:bg-[#FF8C5A] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
       >
         {isPending ? 'Création du compte…' : 'Démarrer l\'essai gratuit'}
       </button>

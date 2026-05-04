@@ -64,8 +64,8 @@ function MessageBubble({ message }: { message: Message }) {
     <div className={`flex mb-3 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
         isOutbound
-          ? 'bg-navy text-white rounded-br-sm'
-          : 'bg-white border border-zinc-200 text-navy rounded-bl-sm'
+          ? 'bg-[#1B2B4B] text-white rounded-br-sm'
+          : 'bg-white border border-zinc-200 text-[#1B2B4B] rounded-bl-sm'
       }`}>
         {message.subject && (
           <p className={`text-xs font-semibold mb-1 ${isOutbound ? 'text-white/70' : 'text-zinc-500'}`}>
@@ -75,7 +75,7 @@ function MessageBubble({ message }: { message: Message }) {
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
         <div className={`flex items-center gap-1.5 mt-1 ${isOutbound ? 'justify-end' : ''}`}>
           {message.is_ai_generated && (
-            <span className={`text-xs font-medium ${isOutbound ? 'text-white/50' : 'text-orange'}`}>✦ IA</span>
+            <span className={`text-xs font-medium ${isOutbound ? 'text-white/50' : 'text-[#FF6B35]'}`}>✦ IA</span>
           )}
           <span className={`text-xs ${isOutbound ? 'text-white/50' : 'text-zinc-400'}`}>
             {new Date(message.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -147,7 +147,7 @@ function ConversationThread({
         <div className="flex items-center gap-2">
           <span className="text-lg">{CHANNEL_ICONS[ch]}</span>
           <div>
-            <p className="text-sm font-semibold text-navy">{conversation.leadName}</p>
+            <p className="text-sm font-semibold text-[#1B2B4B]">{conversation.leadName}</p>
             <p className="text-xs text-zinc-400">{CHANNEL_LABELS[ch]}</p>
           </div>
         </div>
@@ -157,7 +157,7 @@ function ConversationThread({
       <div className="flex-1 overflow-y-auto px-5 py-4">
         {loading && (
           <div className="flex justify-center py-8">
-            <div className="w-5 h-5 border-2 border-zinc-200 border-t-navy rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-zinc-200 border-t-[#1B2B4B] rounded-full animate-spin" />
           </div>
         )}
         {!loading && messages.length === 0 && (
@@ -179,7 +179,7 @@ function ConversationThread({
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Sujet de l'email..."
-            className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-navy placeholder-zinc-300 focus:outline-none focus:border-navy/50 mb-2"
+            className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 mb-2"
           />
         )}
         <div className="flex gap-2">
@@ -191,12 +191,12 @@ function ConversationThread({
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSend()
             }}
-            className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm text-navy placeholder-zinc-300 focus:outline-none focus:border-navy/50 resize-none"
+            className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm text-[#1B2B4B] placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 resize-none"
           />
           <button
             onClick={handleSend}
             disabled={isSending || !content.trim()}
-            className="px-4 py-2 text-sm font-medium text-white bg-orange rounded-xl hover:bg-orange-light transition-colors disabled:opacity-50 flex-none self-end"
+            className="px-4 py-2 text-sm font-medium text-white bg-[#FF6B35] rounded-xl hover:bg-[#FF8C5A] transition-colors disabled:opacity-50 flex-none self-end"
           >
             {isSending ? (
               <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -242,7 +242,7 @@ export function ConversationView({ conversations }: { conversations: Conversatio
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher..."
-              className="w-full pl-8 pr-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-navy/50 text-navy placeholder-zinc-300"
+              className="w-full pl-8 pr-3 py-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-[#1B2B4B]/50 text-[#1B2B4B] placeholder-zinc-300"
             />
           </div>
         </div>
@@ -258,14 +258,14 @@ export function ConversationView({ conversations }: { conversations: Conversatio
               key={conv.id}
               onClick={() => setSelected(conv)}
               className={`w-full px-3 py-3 text-left border-b border-zinc-50 hover:bg-zinc-50 transition-colors ${
-                selected?.id === conv.id ? 'bg-navy-50 border-l-2 border-l-navy' : ''
+                selected?.id === conv.id ? 'bg-[#f0f3f9] border-l-2 border-l-[#1B2B4B]' : ''
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-base flex-none">{CHANNEL_ICONS[conv.channel]}</span>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-navy truncate">{conv.leadName}</p>
+                    <p className="text-xs font-semibold text-[#1B2B4B] truncate">{conv.leadName}</p>
                     <p className="text-xs text-zinc-400 truncate">
                       {conv.leadEmail ?? conv.leadPhone ?? CHANNEL_LABELS[conv.channel]}
                     </p>

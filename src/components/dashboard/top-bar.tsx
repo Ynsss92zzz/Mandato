@@ -14,7 +14,7 @@ export function TopBar({ userName, userEmail, pageTitle }: TopBarProps) {
   return (
     <header className="h-14 bg-white border-b border-zinc-100 flex items-center justify-between px-6 flex-shrink-0">
       {pageTitle ? (
-        <h1 className="text-base font-semibold text-navy">{pageTitle}</h1>
+        <h1 className="text-base font-semibold text-[#1B2B4B]">{pageTitle}</h1>
       ) : (
         <div />
       )}
@@ -27,7 +27,7 @@ export function TopBar({ userName, userEmail, pageTitle }: TopBarProps) {
 
         {/* Avatar + déconnexion */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-navy rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 bg-[#1B2B4B] rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white text-xs font-semibold">{getInitials(userName)}</span>
           </div>
           <div className="hidden sm:block">

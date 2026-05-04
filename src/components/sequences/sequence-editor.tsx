@@ -83,7 +83,7 @@ function SortableStep({ id, step, index, onEdit, onDelete }: SortableStepProps) 
     <div ref={setNodeRef} style={style} className="flex gap-3 items-start">
       {/* Timeline connector */}
       <div className="flex flex-col items-center flex-none" style={{ width: 28 }}>
-        <div className="w-7 h-7 rounded-full bg-navy flex items-center justify-center text-xs font-bold text-white flex-none">
+        <div className="w-7 h-7 rounded-full bg-[#1B2B4B] flex items-center justify-center text-xs font-bold text-white flex-none">
           {index + 1}
         </div>
         <div className="w-px flex-1 bg-zinc-200 mt-1 min-h-[24px]" />
@@ -108,12 +108,12 @@ function SortableStep({ id, step, index, onEdit, onDelete }: SortableStepProps) 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span className="text-base">{CHANNEL_ICONS[ch]}</span>
-                <span className="text-sm font-semibold text-navy">{CHANNEL_LABELS[ch]}</span>
+                <span className="text-sm font-semibold text-[#1B2B4B]">{CHANNEL_LABELS[ch]}</span>
                 <span className="text-xs text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded-full border border-zinc-100">
                   {formatDelay(step.delay_hours)}
                 </span>
                 {step.is_ai_generated && (
-                  <span className="text-xs text-orange bg-orange/10 px-2 py-0.5 rounded-full font-medium">
+                  <span className="text-xs text-[#FF6B35] bg-[#FF6B35]/10 px-2 py-0.5 rounded-full font-medium">
                     IA
                   </span>
                 )}
@@ -132,7 +132,7 @@ function SortableStep({ id, step, index, onEdit, onDelete }: SortableStepProps) 
           <div className="flex items-center gap-1 flex-none">
             <button
               onClick={onEdit}
-              className="p-1.5 text-zinc-400 hover:text-navy hover:bg-zinc-50 rounded-lg transition-colors"
+              className="p-1.5 text-zinc-400 hover:text-[#1B2B4B] hover:bg-zinc-50 rounded-lg transition-colors"
               title="Modifier"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -253,7 +253,7 @@ export function SequenceEditor({ sequenceId, sequence, initialSteps = [] }: Sequ
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Relance nouveaux leads"
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-navy placeholder-zinc-300 focus:outline-none focus:border-navy/50 focus:ring-2 focus:ring-navy/10"
+              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10"
             />
           </div>
 
@@ -262,7 +262,7 @@ export function SequenceEditor({ sequenceId, sequence, initialSteps = [] }: Sequ
             <select
               value={triggerOn}
               onChange={(e) => setTriggerOn(e.target.value)}
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:border-navy/50 focus:ring-2 focus:ring-navy/10"
+              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10"
             >
               {TRIGGER_OPTIONS.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -275,7 +275,7 @@ export function SequenceEditor({ sequenceId, sequence, initialSteps = [] }: Sequ
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as SequenceStatus)}
-              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:border-navy/50 focus:ring-2 focus:ring-navy/10"
+              className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10"
             >
               <option value="actif">Actif</option>
               <option value="pause">En pause</option>
@@ -288,7 +288,7 @@ export function SequenceEditor({ sequenceId, sequence, initialSteps = [] }: Sequ
       {/* Steps */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-navy">
+          <h2 className="text-sm font-semibold text-[#1B2B4B]">
             Étapes ({steps.length})
           </h2>
         </div>
@@ -326,7 +326,7 @@ export function SequenceEditor({ sequenceId, sequence, initialSteps = [] }: Sequ
 
         <button
           onClick={() => setStepModal({ open: true })}
-          className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-zinc-200 text-zinc-400 hover:border-orange hover:text-orange rounded-xl py-3 text-sm font-medium transition-colors"
+          className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-zinc-200 text-zinc-400 hover:border-[#FF6B35] hover:text-[#FF6B35] rounded-xl py-3 text-sm font-medium transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -351,7 +351,7 @@ export function SequenceEditor({ sequenceId, sequence, initialSteps = [] }: Sequ
         <button
           onClick={handleSave}
           disabled={isPending}
-          className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-navy rounded-lg hover:bg-navy-light transition-colors disabled:opacity-60"
+          className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-[#1B2B4B] rounded-lg hover:bg-[#2D4270] transition-colors disabled:opacity-60"
         >
           {isPending ? 'Enregistrement...' : sequenceId === 'new' ? 'Créer la séquence' : 'Enregistrer'}
         </button>
