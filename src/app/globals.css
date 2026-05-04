@@ -18,16 +18,9 @@
   --font-sans: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme inline {
-    --color-background: #0f172a;
-    --color-foreground: #f8fafc;
-  }
-}
-
 body {
-  background: var(--color-background);
-  color: var(--color-foreground);
+  background: #ffffff;
+  color: #0f172a;
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
