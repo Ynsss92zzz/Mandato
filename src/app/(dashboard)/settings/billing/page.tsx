@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { PLANS, type PlanId } from '@/constants/plans'
 import { BillingActions } from '@/components/settings/billing-actions'
+import { CheckoutButton } from '@/components/settings/checkout-button'
 import { Check, X, AlertTriangle, Clock, Zap } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Abonnement' }
@@ -262,27 +263,24 @@ export default async function BillingPage({
                   ))}
                 </ul>
 
-                <form
-                  action={async () => {
-                    'use server'
-                    const { startCheckout } = await import('@/actions/billing')
-                    await startCheckout(plan.id)
-                  }}
-                >
+                {isCurrent ? (
                   <button
-                    type="submit"
-                    disabled={isCurrent}
-                    className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors
-                      ${isCurrent
-                        ? 'bg-zinc-100 text-zinc-400 cursor-default'
-                        : isUpgrade
+                    disabled
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold bg-zinc-100 text-zinc-400 cursor-default"
+                  >
+                    Plan actuel
+                  </button>
+                ) : (
+                  <CheckoutButton
+                    planId={plan.id}
+                    label={isUpgrade ? `Passer à ${plan.name}` : `Revenir à ${plan.name}`}
+                    className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center
+                      ${isUpgrade
                         ? 'bg-[#FF6B35] hover:bg-[#FF8C5A] text-white'
                         : 'bg-[#1B2B4B] hover:bg-[#2D4270] text-white'
                       }`}
-                  >
-                    {isCurrent ? 'Plan actuel' : isUpgrade ? `Passer à ${plan.name}` : `Revenir à ${plan.name}`}
-                  </button>
-                </form>
+                  />
+                )}
               </div>
             )
           })}
