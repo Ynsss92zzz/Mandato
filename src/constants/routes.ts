@@ -27,5 +27,6 @@ export const ROUTES = {
 } as const
 
 export const PUBLIC_ROUTES = ['/', '/pricing', '/login', '/register', '/forgot-password']
+export const PUBLIC_PREFIXES = ['/booking/']
 
 export const AGENCE_ONLY_ROUTES = ['/analytics', '/team']

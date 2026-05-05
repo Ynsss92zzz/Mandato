@@ -508,6 +508,42 @@ export interface Database {
         }
         Relationships: []
       }
+      availability_settings: {
+        Row: {
+          id: string
+          agency_id: string
+          days: number[]
+          start_hour: number
+          end_hour: number
+          slot_duration: number
+          advance_days: number
+          timezone: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          agency_id: string
+          days?: number[]
+          start_hour?: number
+          end_hour?: number
+          slot_duration?: number
+          advance_days?: number
+          timezone?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          days?: number[]
+          start_hour?: number
+          end_hour?: number
+          slot_duration?: number
+          advance_days?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           id: string

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { PUBLIC_ROUTES } from '@/constants/routes'
+import { PUBLIC_ROUTES, PUBLIC_PREFIXES } from '@/constants/routes'
 
 // Optimistic session check via Supabase cookie — no network call, fully edge-safe.
 // The real session verification (and token refresh) happens in the dashboard layout
@@ -16,7 +16,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
-  const isPublicPage = PUBLIC_ROUTES.includes(pathname)
+  const isPublicPage = PUBLIC_ROUTES.includes(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
   const hasSession = hasSessionCookie(request)
 
   // Protected route without session → redirect to login

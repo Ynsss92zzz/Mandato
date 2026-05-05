@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Calendar, Clock, MapPin, User, Plus, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Calendar, Clock, MapPin, User, CheckCircle, XCircle } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Rendez-vous' }
 
@@ -32,25 +32,29 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
-function EmptyState() {
+function EmptyState({ agencyId }: { agencyId: string | undefined }) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mandato-app.vercel.app'
+  const bookingUrl = agencyId ? `${appUrl}/booking/${agencyId}` : null
+
   return (
     <div className="bg-white rounded-xl border border-zinc-200 p-16 text-center">
       <div className="w-16 h-16 bg-[#f0f3f9] rounded-2xl flex items-center justify-center mx-auto mb-4">
         <Calendar className="w-8 h-8 text-[#1B2B4B]/40" />
       </div>
-      <h3 className="font-semibold text-zinc-800 mb-1">Aucun rendez-vous</h3>
+      <h3 className="font-semibold text-zinc-800 mb-1">Aucun rendez-vous à venir</h3>
       <p className="text-sm text-zinc-400 mb-6 max-w-xs mx-auto">
-        Vos rendez-vous Cal.com apparaîtront ici automatiquement une fois configurés.
+        Partagez votre lien de réservation à vos prospects pour qu&apos;ils réservent un créneau.
       </p>
-      <a
-        href="https://cal.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 bg-[#1B2B4B] hover:bg-[#2D4270] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
-      >
-        <ExternalLink className="w-4 h-4" />
-        Configurer Cal.com
-      </a>
+      {bookingUrl && (
+        <a
+          href={bookingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 bg-[#1B2B4B] hover:bg-[#2D4270] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
+        >
+          Voir ma page de réservation
+        </a>
+      )}
     </div>
   )
 }
@@ -75,7 +79,6 @@ export default async function AppointmentsPage() {
     scheduled_at: string
     duration_min: number
     location: string | null
-    calcom_url: string | null
     lead_id: string
   }
 
@@ -89,14 +92,14 @@ export default async function AppointmentsPage() {
     const [{ data: upcomingData }, { data: pastData }] = await Promise.all([
       supabase
         .from('appointments')
-        .select('id, title, status, scheduled_at, duration_min, location, calcom_url, lead_id')
+        .select('id, title, status, scheduled_at, duration_min, location, lead_id')
         .eq('agency_id', agencyId)
         .gte('scheduled_at', now)
         .order('scheduled_at', { ascending: true })
         .limit(20),
       supabase
         .from('appointments')
-        .select('id, title, status, scheduled_at, duration_min, location, calcom_url, lead_id')
+        .select('id, title, status, scheduled_at, duration_min, location, lead_id')
         .eq('agency_id', agencyId)
         .lt('scheduled_at', now)
         .order('scheduled_at', { ascending: false })
@@ -124,6 +127,9 @@ export default async function AppointmentsPage() {
     total: upcoming.length + past.length,
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mandato-app.vercel.app'
+  const bookingUrl = agencyId ? `${appUrl}/booking/${agencyId}` : null
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -132,15 +138,16 @@ export default async function AppointmentsPage() {
           <h1 className="text-2xl font-semibold text-[#1B2B4B]">Rendez-vous</h1>
           <p className="text-sm text-zinc-400 mt-0.5">Gérez vos rendez-vous clients</p>
         </div>
-        <a
-          href="https://cal.com/new"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-[#FF6B35] hover:bg-[#FF8C5A] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Nouveau RDV
-        </a>
+        {bookingUrl && (
+          <a
+            href={bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-[#FF6B35] hover:bg-[#FF8C5A] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm"
+          >
+            Ma page de réservation
+          </a>
+        )}
       </div>
 
       {/* Stats */}
@@ -161,7 +168,7 @@ export default async function AppointmentsPage() {
       <div>
         <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">À venir</h2>
         {upcoming.length === 0 ? (
-          <EmptyState />
+          <EmptyState agencyId={agencyId} />
         ) : (
           <div className="space-y-3">
             {upcoming.map((appt) => (
@@ -208,18 +215,6 @@ export default async function AppointmentsPage() {
                     )}
                   </div>
                 </div>
-
-                {appt.calcom_url && (
-                  <a
-                    href={appt.calcom_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-none text-zinc-400 hover:text-[#1B2B4B] transition-colors mt-1"
-                    title="Voir sur Cal.com"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                )}
               </div>
             ))}
           </div>
@@ -252,19 +247,19 @@ export default async function AppointmentsPage() {
         </div>
       )}
 
-      {/* Cal.com info */}
-      <div className="bg-[#f0f3f9] rounded-xl p-4 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-[#1B2B4B]/50 flex-none mt-0.5" />
-        <div>
-          <p className="text-sm font-medium text-[#1B2B4B]">Synchronisation Cal.com</p>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Les rendez-vous sont créés automatiquement via le webhook Cal.com. Configurez l&apos;intégration dans{' '}
-            <Link href="/settings/integrations" className="underline hover:text-[#1B2B4B]">
-              Paramètres → Intégrations
-            </Link>.
+      {/* Booking link info */}
+      {bookingUrl && (
+        <div className="bg-[#f0f3f9] rounded-xl p-4">
+          <p className="text-sm font-medium text-[#1B2B4B] mb-1">Votre lien de réservation</p>
+          <p className="text-xs text-zinc-500">
+            Configurez vos disponibilités dans{' '}
+            <Link href="/settings/availability" className="underline hover:text-[#1B2B4B]">
+              Paramètres → Disponibilités
+            </Link>{' '}
+            puis partagez votre lien aux prospects.
           </p>
         </div>
-      </div>
+      )}
     </div>
   )
 }

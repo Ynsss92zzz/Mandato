@@ -12,6 +12,7 @@ import {
   Users2,
   Settings,
   ChevronRight,
+  Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -114,6 +115,26 @@ export function Sidebar({ agencyName, plan }: SidebarProps) {
 
       {/* Footer : agence info + settings */}
       <div className="px-3 pb-4 border-t border-white/10 pt-3 space-y-0.5">
+        <Link
+          href="/settings/availability"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors group',
+            isActive('/settings/availability')
+              ? 'bg-white/10 text-white'
+              : 'text-white/60 hover:text-white hover:bg-white/5'
+          )}
+        >
+          <Clock
+            className={cn(
+              'w-4 h-4 flex-shrink-0',
+              isActive('/settings/availability') ? 'text-[#FF6B35]' : 'text-white/40 group-hover:text-white/70'
+            )}
+          />
+          Disponibilités
+          {isActive('/settings/availability') && (
+            <ChevronRight className="w-3 h-3 ml-auto text-white/30" />
+          )}
+        </Link>
         <Link
           href="/settings/referral"
           className={cn(

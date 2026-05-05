@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Code, Copy, Check, Globe, Palette, MessageSquare, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
+import { Code, Copy, Check, Globe, Palette, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Props {
   agencyId: string
@@ -122,7 +122,6 @@ MandatoWidget.init({
   primaryColor: '${primaryColor}',
 })`
 
-  const webhookUrl = `${appUrl}/api/webhooks/calcom`
   const twilioWebhookUrl = `${appUrl}/api/webhooks/twilio`
 
   return (
@@ -182,52 +181,6 @@ MandatoWidget.init({
               Configurez les domaines dans votre dashboard Supabase → table <code className="bg-white px-1 py-0.5 rounded">widget_configs</code>.
             </p>
           </div>
-        </div>
-      </section>
-
-      {/* Cal.com */}
-      <section className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-zinc-100 flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-            <span className="text-sm font-bold text-blue-600">C</span>
-          </div>
-          <div>
-            <h2 className="font-semibold text-zinc-800">Cal.com — Prise de rendez-vous</h2>
-            <p className="text-xs text-zinc-400">Synchronisez vos RDV automatiquement</p>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-1 gap-3">
-            <div>
-              <p className="text-xs font-medium text-zinc-500 mb-1.5">URL du webhook à configurer dans Cal.com</p>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs text-zinc-700 truncate">
-                  {webhookUrl}
-                </code>
-                <CopyButton text={webhookUrl} />
-              </div>
-            </div>
-            <div className="text-xs text-zinc-500 space-y-1">
-              <p className="font-medium text-zinc-700">Événements à activer :</p>
-              {['BOOKING_CREATED', 'BOOKING_CANCELLED', 'BOOKING_RESCHEDULED'].map((e) => (
-                <p key={e} className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-green-500" />
-                  {e}
-                </p>
-              ))}
-            </div>
-          </div>
-
-          <a
-            href="https://cal.com/settings/developer/webhooks"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#1B2B4B] hover:text-[#2D4270] transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Ouvrir Cal.com → Webhooks
-          </a>
         </div>
       </section>
 
