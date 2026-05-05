@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Calendar, Clock, MapPin, User, CheckCircle, XCircle } from 'lucide-react'
 import { NewPersonalAppointmentModal } from '@/components/appointments/new-personal-appointment-modal'
+import { DeleteAppointmentButton } from '@/components/appointments/delete-appointment-button'
 
 export const metadata: Metadata = { title: 'Rendez-vous' }
 
@@ -284,6 +285,8 @@ export default async function AppointmentsPage() {
                       )}
                     </div>
                   </div>
+
+                  <DeleteAppointmentButton id={appt.id} title={appt.title} />
                 </div>
               )
             })}
@@ -312,6 +315,7 @@ export default async function AppointmentsPage() {
                     </p>
                   </div>
                   <StatusBadge status={appt.status} />
+                  <DeleteAppointmentButton id={appt.id} title={appt.title} />
                 </div>
               )
             })}

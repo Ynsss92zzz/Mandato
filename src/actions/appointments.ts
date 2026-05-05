@@ -63,3 +63,30 @@ export async function createPersonalAppointment(
   revalidatePath('/appointments')
   return { ok: true }
 }
+
+export async function deleteAppointment(
+  id: string,
+): Promise<{ error: string } | { ok: true }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: member } = await supabase
+    .from('agency_members')
+    .select('agency_id')
+    .eq('profile_id', user.id)
+    .single()
+
+  if (!member) return { error: 'Agence introuvable' }
+
+  const { error } = await supabase
+    .from('appointments')
+    .delete()
+    .eq('id', id)
+    .eq('agency_id', member.agency_id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/appointments')
+  return { ok: true }
+}
