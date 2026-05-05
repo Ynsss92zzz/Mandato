@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Trash2, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { deleteAppointment } from '@/actions/appointments'
 
 interface Props {
   id: string
   title: string
+  onSuccess: () => void
 }
 
 function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
@@ -28,11 +28,10 @@ function Toast({ message, type }: { message: string; type: 'success' | 'error' }
   )
 }
 
-export function DeleteAppointmentButton({ id, title }: Props) {
+export function DeleteAppointmentButton({ id, title, onSuccess }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [pending, startTransition] = useTransition()
-  const router = useRouter()
 
   useEffect(() => {
     if (!toast) return
@@ -48,7 +47,7 @@ export function DeleteAppointmentButton({ id, title }: Props) {
         setToast({ message: result.error, type: 'error' })
       } else {
         setToast({ message: 'Rendez-vous supprimé', type: 'success' })
-        router.refresh()
+        onSuccess()
       }
     })
   }
@@ -63,7 +62,6 @@ export function DeleteAppointmentButton({ id, title }: Props) {
         <Trash2 className="w-4 h-4" />
       </button>
 
-      {/* Confirmation modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
@@ -71,15 +69,12 @@ export function DeleteAppointmentButton({ id, title }: Props) {
             onClick={() => !pending && setModalOpen(false)}
           />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm z-10 overflow-hidden">
-            {/* Header */}
             <div className="flex items-start justify-between px-5 py-4 border-b border-zinc-100">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-red-50 rounded-xl flex items-center justify-center flex-none">
                   <Trash2 className="w-4 h-4 text-red-500" />
                 </div>
-                <h2 className="font-semibold text-zinc-800 text-sm leading-snug">
-                  Supprimer ce rendez-vous
-                </h2>
+                <h2 className="font-semibold text-zinc-800 text-sm">Supprimer ce rendez-vous</h2>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
@@ -90,15 +85,14 @@ export function DeleteAppointmentButton({ id, title }: Props) {
               </button>
             </div>
 
-            {/* Body */}
-            <div className="px-5 py-4 space-y-3">
+            <div className="px-5 py-4 space-y-4">
               <p className="text-sm text-zinc-600 leading-relaxed">
                 Êtes-vous sûr de vouloir supprimer{' '}
                 <span className="font-semibold text-zinc-800">&laquo;{title}&raquo;</span> ?{' '}
                 Cette action est irréversible.
               </p>
 
-              <div className="flex gap-3 pt-1">
+              <div className="flex gap-3">
                 <button
                   onClick={() => setModalOpen(false)}
                   disabled={pending}
@@ -122,7 +116,6 @@ export function DeleteAppointmentButton({ id, title }: Props) {
         </div>
       )}
 
-      {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} />}
     </>
   )
