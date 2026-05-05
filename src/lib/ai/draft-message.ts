@@ -60,11 +60,16 @@ ${firstName ? `L'agent s'appelle ${firstName}.` : ''}
 
 ${signatureLines ? `Informations de contact réelles à utiliser dans la signature :\n${signatureLines}` : ''}
 
-Contraintes : ${maxLength}
+Règles absolues — ne jamais enfreindre :
+- Tu ne connais PAS les biens disponibles de l'agence. Ne mentionne JAMAIS de biens spécifiques, de stock, d'appartements, de maisons ou de propriétés disponibles.
+- Ne mentionne JAMAIS de prix, de surface, de nombre de pièces ou de caractéristiques de biens.
+- Ne invente AUCUNE information que tu ne connais pas avec certitude.
+- Reste factuel : base-toi UNIQUEMENT sur les informations du lead fournies ci-dessus.
+- L'objectif unique du message : remercier le lead pour sa demande, confirmer que sa recherche a bien été prise en compte, et proposer un rendez-vous pour en discuter.
+
+Contraintes de forme : ${maxLength}
 - Ton chaleureux et professionnel
 - En français
-- Personnalisé selon le profil
-- Appel à l'action clair
 - Si le message inclut une signature, utilise les vraies informations de contact ci-dessus — n'utilise aucun placeholder entre crochets
 
 Retourne UNIQUEMENT le message, sans introduction ni explication.`
