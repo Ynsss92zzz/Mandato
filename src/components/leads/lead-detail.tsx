@@ -125,6 +125,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
     startDelete(async () => {
       const result = await deleteLead(lead.id)
       if (!result?.error) {
+        router.refresh()
         router.push('/leads')
       }
     })

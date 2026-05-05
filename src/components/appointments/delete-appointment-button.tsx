@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Trash2, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { deleteAppointment } from '@/actions/appointments'
 
@@ -29,6 +30,7 @@ function Toast({ message, type }: { message: string; type: 'success' | 'error' }
 }
 
 export function DeleteAppointmentButton({ id, title, onSuccess }: Props) {
+  const router = useRouter()
   const [modalOpen, setModalOpen] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [pending, startTransition] = useTransition()
@@ -48,6 +50,7 @@ export function DeleteAppointmentButton({ id, title, onSuccess }: Props) {
       } else {
         setToast({ message: 'Rendez-vous supprimé', type: 'success' })
         onSuccess()
+        router.refresh()
       }
     })
   }
