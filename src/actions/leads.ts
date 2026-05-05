@@ -131,12 +131,24 @@ export async function deleteLead(leadId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const { error } = await supabase
+  const agencyId = await getAgencyId(supabase, user.id)
+  if (!agencyId) return { error: 'Agence introuvable' }
+
+  const { data: deleted, error } = await supabase
     .from('leads')
     .delete()
     .eq('id', leadId)
+    .eq('agency_id', agencyId)
+    .select('id')
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('[deleteLead] error', { leadId, message: error.message, code: error.code })
+    return { error: error.message }
+  }
+  if (!deleted || deleted.length === 0) {
+    console.error('[deleteLead] 0 rows deleted — RLS block or wrong id', { leadId, agencyId })
+    return { error: 'Lead introuvable ou accès refusé' }
+  }
 
   revalidatePath('/leads')
   return { success: true }

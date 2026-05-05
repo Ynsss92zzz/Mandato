@@ -122,13 +122,21 @@ export async function deleteSequence(sequenceId: string) {
   const agencyId = await getAgencyId(supabase, user.id)
   if (!agencyId) return { error: 'Agence introuvable' }
 
-  const { error } = await supabase
+  const { data: deleted, error } = await supabase
     .from('sequences')
     .delete()
     .eq('id', sequenceId)
     .eq('agency_id', agencyId)
+    .select('id')
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('[deleteSequence] error', { sequenceId, message: error.message, code: error.code })
+    return { error: error.message }
+  }
+  if (!deleted || deleted.length === 0) {
+    console.error('[deleteSequence] 0 rows deleted — RLS block or wrong id', { sequenceId, agencyId })
+    return { error: 'Séquence introuvable ou accès refusé' }
+  }
 
   revalidatePath('/sequences')
   return { success: true }

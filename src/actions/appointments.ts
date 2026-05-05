@@ -79,13 +79,21 @@ export async function deleteAppointment(
 
   if (!member) return { error: 'Agence introuvable' }
 
-  const { error } = await supabase
+  const { data: deleted, error } = await supabase
     .from('appointments')
     .delete()
     .eq('id', id)
     .eq('agency_id', member.agency_id)
+    .select('id')
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('[deleteAppointment] error', { id, message: error.message, code: error.code })
+    return { error: error.message }
+  }
+  if (!deleted || deleted.length === 0) {
+    console.error('[deleteAppointment] 0 rows deleted — RLS block or wrong id', { id, agency_id: member.agency_id })
+    return { error: 'Rendez-vous introuvable ou accès refusé' }
+  }
 
   revalidatePath('/appointments')
   return { ok: true }
