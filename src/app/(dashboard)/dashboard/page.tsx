@@ -134,6 +134,21 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
+      {/* Bandeau upgrade Starter */}
+      {isStarter && (
+        <div className="rounded-2xl bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] px-5 py-4 flex items-center justify-between gap-4 shadow-sm">
+          <p className="text-sm font-semibold text-white leading-snug">
+            🚀 Passez au plan Pro et obtenez des relances illimitées + WhatsApp + SMS
+          </p>
+          <Link
+            href="/settings/billing"
+            className="shrink-0 bg-white text-[#FF6B35] text-xs font-bold px-4 py-2 rounded-xl hover:bg-orange-50 transition-colors whitespace-nowrap"
+          >
+            Voir le plan Pro →
+          </Link>
+        </div>
+      )}
+
       {/* Alerte quota Starter */}
       {isStarter && leadsQuotaPercent >= 70 && (
         <div className={`rounded-2xl border px-5 py-4 flex items-center justify-between gap-4 ${leadsQuotaPercent >= 90 ? 'bg-red-50 border-red-200' : 'bg-[#fff4f0] border-[#FF6B35]-200'}`}>
