@@ -284,9 +284,12 @@ export interface Database {
         Row: {
           id: string
           agency_id: string
-          lead_id: string
+          lead_id: string | null
           agent_id: string | null
           title: string
+          type: 'client' | 'personal'
+          category: 'reunion_interne' | 'visite_terrain' | 'formation' | 'autre' | null
+          notes: string | null
           description: string | null
           status: 'planifie' | 'confirme' | 'annule' | 'effectue'
           scheduled_at: string
@@ -300,9 +303,12 @@ export interface Database {
         Insert: {
           id?: string
           agency_id: string
-          lead_id: string
+          lead_id?: string | null
           agent_id?: string | null
           title: string
+          type?: 'client' | 'personal'
+          category?: 'reunion_interne' | 'visite_terrain' | 'formation' | 'autre' | null
+          notes?: string | null
           description?: string | null
           status?: 'planifie' | 'confirme' | 'annule' | 'effectue'
           scheduled_at: string
@@ -315,6 +321,9 @@ export interface Database {
         }
         Update: {
           title?: string
+          type?: 'client' | 'personal'
+          category?: 'reunion_interne' | 'visite_terrain' | 'formation' | 'autre' | null
+          notes?: string | null
           description?: string | null
           status?: 'planifie' | 'confirme' | 'annule' | 'effectue'
           scheduled_at?: string

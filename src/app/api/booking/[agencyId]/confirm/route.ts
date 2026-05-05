@@ -106,6 +106,7 @@ export async function POST(
       agency_id:    agencyId,
       lead_id:      leadId,
       title:        `RDV avec ${first_name}${last_name ? ' ' + last_name : ''}`,
+      type:         'client',
       status:       'confirme',
       scheduled_at: slotStart.toISOString(),
       duration_min: durationMin,
