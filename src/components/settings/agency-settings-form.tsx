@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Building2, User, Globe, Phone, MapPin, Lock, Save, CheckCircle } from 'lucide-react'
+import { Building2, User, Globe, Phone, MapPin, Lock, Save, CheckCircle, Mail, X } from 'lucide-react'
 import { updateAgencySettings, updateProfileSettings } from '@/actions/settings'
+import { createClient } from '@/lib/supabase/client'
 
 interface AgencyData {
   name: string
@@ -103,6 +104,12 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
   const [agencyPending, startAgencyTransition] = useTransition()
   const [profilePending, startProfileTransition] = useTransition()
 
+  const [emailChangeMode, setEmailChangeMode] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [emailChangePending, startEmailChangeTransition] = useTransition()
+  const [emailChangeSuccess, setEmailChangeSuccess] = useState<string | null>(null)
+  const [emailChangeError, setEmailChangeError] = useState<string | null>(null)
+
   function handleAgencySubmit(e: React.FormEvent) {
     e.preventDefault()
     setAgencyError(null)
@@ -132,6 +139,32 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
       } else {
         setProfileSaved(true)
         setTimeout(() => setProfileSaved(false), 3000)
+      }
+    })
+  }
+
+  function handleEmailChange(e: React.FormEvent) {
+    e.preventDefault()
+    setEmailChangeError(null)
+    setEmailChangeSuccess(null)
+    const trimmed = newEmail.trim()
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailChangeError('Veuillez saisir une adresse email valide.')
+      return
+    }
+    startEmailChangeTransition(async () => {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ email: trimmed })
+      if (error) {
+        if (error.message.toLowerCase().includes('already')) {
+          setEmailChangeError('Cette adresse email est déjà utilisée.')
+        } else {
+          setEmailChangeError(error.message)
+        }
+      } else {
+        setEmailChangeSuccess(trimmed)
+        setEmailChangeMode(false)
+        setNewEmail('')
       }
     })
   }
@@ -291,15 +324,68 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
               placeholder="Jean Dupont"
               icon={User}
             />
-            <Field
-              label="Email"
-              name="email"
-              value={profile.email}
-              onChange={() => {}}
-              type="email"
-              disabled
-            />
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Email</label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                  <input
+                    type="email"
+                    value={profile.email}
+                    readOnly
+                    className="w-full border border-zinc-200 rounded-xl py-2.5 pl-9 pr-4 text-sm bg-zinc-50 text-zinc-400 cursor-default outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setEmailChangeMode((m) => !m); setEmailChangeError(null); setEmailChangeSuccess(null); setNewEmail('') }}
+                  className="shrink-0 text-sm font-medium text-[#1B2B4B] hover:text-[#2D4270] border border-zinc-200 hover:border-[#1B2B4B]/30 px-3 py-2.5 rounded-xl transition-colors"
+                >
+                  {emailChangeMode ? <X className="w-4 h-4" /> : 'Changer'}
+                </button>
+              </div>
+            </div>
           </div>
+
+          {emailChangeMode && (
+            <div className="border border-zinc-200 rounded-xl p-4 space-y-3 bg-zinc-50">
+              <p className="text-sm font-medium text-zinc-700">Nouvelle adresse email</p>
+              {emailChangeError && (
+                <div className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg px-3 py-2">
+                  {emailChangeError}
+                </div>
+              )}
+              <form onSubmit={handleEmailChange} className="flex gap-2">
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="nouvelle@adresse.fr"
+                  autoFocus
+                  className="flex-1 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-[#1B2B4B]/20 focus:border-[#1B2B4B]"
+                />
+                <button
+                  type="submit"
+                  disabled={emailChangePending}
+                  className="inline-flex items-center gap-2 bg-[#1B2B4B] hover:bg-[#2D4270] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
+                >
+                  {emailChangePending ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    'Confirmer'
+                  )}
+                </button>
+              </form>
+              <p className="text-xs text-zinc-400">Un email de confirmation vous sera envoyé. L&apos;adresse ne changera qu&apos;après avoir cliqué sur le lien.</p>
+            </div>
+          )}
+
+          {emailChangeSuccess && (
+            <div className="bg-green-50 border border-green-100 text-green-700 text-sm rounded-xl px-4 py-3 flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>Un email de confirmation a été envoyé à <strong>{emailChangeSuccess}</strong>. Cliquez sur le lien pour confirmer le changement.</span>
+            </div>
+          )}
 
           <div className="flex justify-end pt-2">
             <SaveButton isPending={profilePending} saved={profileSaved} />

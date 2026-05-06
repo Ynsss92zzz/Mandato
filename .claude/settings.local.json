@@ -8,7 +8,8 @@
       "Bash(node -e \"const Stripe = require\\('/c/Users/ynss9/immo-saas/node_modules/stripe'\\); const s = new Stripe\\('sk_test_x'\\); console.log\\('ok'\\)\")",
       "Bash(xargs grep *)",
       "Bash(Remove-Item \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\src\\\\app\\\\page.tsx\" -Force)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git add *)"
     ]
   }
 }
