@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Calendar,
   Zap,
+  FileText,
   BarChart3,
   Users2,
   Settings,
@@ -22,6 +23,7 @@ const navMain = [
   { href: '/conversations', icon: MessageSquare, label: 'Conversations' },
   { href: '/appointments', icon: Calendar, label: 'Rendez-vous' },
   { href: '/sequences', icon: Zap, label: 'Séquences' },
+  { href: '/sequences/templates', icon: FileText, label: 'Templates' },
 ]
 
 const navAgence = [
@@ -38,6 +40,7 @@ export function Sidebar({ agencyName, plan }: SidebarProps) {
   const pathname = usePathname()
 
   function isActive(href: string) {
+    if (href === '/sequences') return pathname === '/sequences' || (pathname.startsWith('/sequences/') && !pathname.startsWith('/sequences/templates'))
     return pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
   }
 
@@ -85,32 +88,48 @@ export function Sidebar({ agencyName, plan }: SidebarProps) {
             Agence
           </p>
         </div>
-        {navAgence.map(({ href, icon: Icon, label }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors group',
-              isActive(href)
-                ? 'bg-white/10 text-white'
-                : 'text-white/60 hover:text-white hover:bg-white/5',
-              plan !== 'agence' && 'opacity-50 cursor-not-allowed pointer-events-none'
-            )}
-          >
-            <Icon
+        {/* Analytics — Pro+ */}
+        {navAgence.slice(0, 1).map(({ href, icon: Icon, label }) => {
+          const locked = plan === 'starter'
+          return (
+            <Link
+              key={href}
+              href={href}
               className={cn(
-                'w-4 h-4 flex-shrink-0',
-                isActive(href) ? 'text-[#FF6B35]' : 'text-white/40 group-hover:text-white/70'
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors group',
+                isActive(href) ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white hover:bg-white/5',
+                locked && 'opacity-50 cursor-not-allowed pointer-events-none'
               )}
-            />
-            {label}
-            {plan !== 'agence' && (
-              <span className="ml-auto text-[10px] bg-[#FF6B35]/20 text-[#FF6B35] px-1.5 py-0.5 rounded font-medium">
-                Agence
-              </span>
-            )}
-          </Link>
-        ))}
+            >
+              <Icon className={cn('w-4 h-4 flex-shrink-0', isActive(href) ? 'text-[#FF6B35]' : 'text-white/40 group-hover:text-white/70')} />
+              {label}
+              {locked && (
+                <span className="ml-auto text-[10px] bg-[#FF6B35]/20 text-[#FF6B35] px-1.5 py-0.5 rounded font-medium">Pro</span>
+              )}
+            </Link>
+          )
+        })}
+        {/* Team — Agence only */}
+        {navAgence.slice(1).map(({ href, icon: Icon, label }) => {
+          const locked = plan !== 'agence'
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors group',
+                isActive(href) ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white hover:bg-white/5',
+                locked && 'opacity-50 cursor-not-allowed pointer-events-none'
+              )}
+            >
+              <Icon className={cn('w-4 h-4 flex-shrink-0', isActive(href) ? 'text-[#FF6B35]' : 'text-white/40 group-hover:text-white/70')} />
+              {label}
+              {locked && (
+                <span className="ml-auto text-[10px] bg-[#FF6B35]/20 text-[#FF6B35] px-1.5 py-0.5 rounded font-medium">Agence</span>
+              )}
+            </Link>
+          )
+        })}
       </nav>
 
       {/* Footer : agence info + settings */}

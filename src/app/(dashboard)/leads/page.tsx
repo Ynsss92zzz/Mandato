@@ -7,10 +7,12 @@ export const metadata: Metadata = { title: 'Leads — Mandato' }
 export default async function LeadsPage() {
   const supabase = await createClient()
 
-  const { data: leads } = await supabase
-    .from('leads')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const [{ data: leads }, { data: sub }] = await Promise.all([
+    supabase.from('leads').select('*').order('created_at', { ascending: false }),
+    supabase.from('subscriptions').select('plan').single(),
+  ])
 
-  return <LeadsView leads={leads ?? []} />
+  const isAgence = sub?.plan === 'agence'
+
+  return <LeadsView leads={leads ?? []} isAgence={isAgence} />
 }

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { TopBar } from '@/components/dashboard/top-bar'
+import { PushProvider } from '@/components/dashboard/push-provider'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -46,15 +47,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const userEmail = user.email ?? ''
 
   return (
-    <div className="flex h-screen bg-[#f0f3f9] overflow-hidden">
-      <Sidebar agencyName={agencyName} plan={plan} />
+    <div className="flex h-screen bg-[#f0f3f9] overflow-hidden print:block print:h-auto print:overflow-visible print:bg-white">
+      <div className="print:hidden">
+        <Sidebar agencyName={agencyName} plan={plan} />
+      </div>
 
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <TopBar userName={userName} userEmail={userEmail} />
-        <main className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 print:overflow-visible">
+        <div className="print:hidden">
+          <TopBar userName={userName} userEmail={userEmail} />
+        </div>
+        <main className="flex-1 overflow-y-auto p-6 print:overflow-visible print:p-0">
           {children}
         </main>
       </div>
+
+      {(plan === 'pro' || plan === 'agence') && <PushProvider />}
     </div>
   )
 }

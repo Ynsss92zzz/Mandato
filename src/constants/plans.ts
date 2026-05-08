@@ -8,6 +8,7 @@ export interface PlanLimits {
   multi_agents: boolean
   advanced_analytics: boolean
   pdf_reports: boolean
+  unlimited_templates: boolean
 }
 
 export interface Plan {
@@ -32,6 +33,7 @@ export const PLANS: Record<PlanId, Plan> = {
       multi_agents: false,
       advanced_analytics: false,
       pdf_reports: false,
+      unlimited_templates: false,
     },
   },
   pro: {
@@ -47,6 +49,7 @@ export const PLANS: Record<PlanId, Plan> = {
       multi_agents: false,
       advanced_analytics: false,
       pdf_reports: false,
+      unlimited_templates: true,
     },
   },
   agence: {
@@ -62,6 +65,7 @@ export const PLANS: Record<PlanId, Plan> = {
       multi_agents: true,
       advanced_analytics: true,
       pdf_reports: true,
+      unlimited_templates: true,
     },
   },
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { validateTwilioSignature } from '@/lib/twilio'
+import { sendPushToMany, type StoredSubscription } from '@/lib/push'
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
@@ -98,6 +99,20 @@ export async function POST(request: NextRequest) {
     .from('leads')
     .update({ last_contacted_at: now })
     .eq('id', lead.id)
+
+  // Push notification to agency members (Pro/Agence)
+  const { data: pushSubs } = await supabase
+    .from('push_subscriptions')
+    .select('endpoint, p256dh, auth')
+    .eq('agency_id', lead.agency_id)
+
+  if (pushSubs && pushSubs.length > 0) {
+    await sendPushToMany(pushSubs as StoredSubscription[], {
+      title: 'Nouveau message entrant',
+      body: `${phone} : ${body.slice(0, 100)}`,
+      url: '/conversations',
+    })
+  }
 
   return new NextResponse(
     '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',

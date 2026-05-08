@@ -17,6 +17,7 @@ export const ROUTES = {
   appointments: '/appointments',
   sequences: '/sequences',
   sequence: (id: string) => `/sequences/${id}`,
+  templates: '/sequences/templates',
   analytics: '/analytics',
   team: '/team',
   settings: '/settings',

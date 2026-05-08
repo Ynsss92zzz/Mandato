@@ -1,35 +1,95 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useTransition } from 'react'
 import { LeadKanban } from './lead-kanban'
 import { LeadList } from './lead-list'
 import { LeadForm } from './lead-form'
 import { useRouter } from 'next/navigation'
 import type { Database } from '@/types/database'
+import { importLeads } from '@/actions/leads'
+import { Upload, Download, CheckCircle, AlertCircle, X } from 'lucide-react'
 
 type Lead = Database['public']['Tables']['leads']['Row']
 type View = 'kanban' | 'list'
+type ImportResult = { count: number } | { error: string } | null
 
-export function LeadsView({ leads }: { leads: Lead[] }) {
+function parseCSV(text: string): Record<string, string>[] {
+  const lines = text.split(/\r?\n/).filter(l => l.trim())
+  if (lines.length < 2) return []
+  const sep = lines[0].includes(';') ? ';' : ','
+
+  function parseLine(line: string) {
+    const result: string[] = []
+    let cur = ''
+    let inQ = false
+    for (const ch of line) {
+      if (ch === '"') { inQ = !inQ }
+      else if (ch === sep && !inQ) { result.push(cur.trim()); cur = '' }
+      else { cur += ch }
+    }
+    result.push(cur.trim())
+    return result
+  }
+
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/['"]/g, '').trim())
+  return lines.slice(1)
+    .filter(l => l.trim())
+    .map(line => {
+      const vals = parseLine(line)
+      return Object.fromEntries(headers.map((h, i) => [h, vals[i]?.replace(/^"|"$/g, '') ?? '']))
+    })
+}
+
+function mapRow(row: Record<string, string>) {
+  const get = (...keys: string[]) => { for (const k of keys) if (row[k]) return row[k]; return '' }
+  const budgetStr = get('budget')
+  const budget = budgetStr ? parseInt(budgetStr.replace(/\D/g, '')) || null : null
+  return {
+    first_name: get('prénom', 'prenom', 'first_name', 'firstname', 'nom', 'name') || null,
+    last_name: get('nom de famille', 'last_name', 'lastname') || null,
+    email: get('email', 'e-mail', 'mail') || null,
+    phone: get('téléphone', 'telephone', 'tel', 'phone', 'mobile', 'portable') || null,
+    budget,
+    message: get('message', 'note', 'notes', 'commentaire') || null,
+  }
+}
+
+export function LeadsView({ leads, isAgence = false }: { leads: Lead[]; isAgence?: boolean }) {
   const [view, setView] = useState<View>('kanban')
   const [formState, setFormState] = useState<{ open: boolean; lead?: Lead }>({ open: false })
+  const [importResult, setImportResult] = useState<ImportResult>(null)
+  const [importing, startImport] = useTransition()
+  const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
-  function openCreate() {
-    setFormState({ open: true, lead: undefined })
-  }
+  function openCreate() { setFormState({ open: true, lead: undefined }) }
+  function openEdit(lead: Lead) { setFormState({ open: true, lead }) }
+  function closeForm() { setFormState({ open: false }) }
+  function handleFormSuccess() { closeForm(); router.refresh() }
 
-  function openEdit(lead: Lead) {
-    setFormState({ open: true, lead })
-  }
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
 
-  function closeForm() {
-    setFormState({ open: false })
-  }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string
+      const rows = parseCSV(text)
+      const mapped = rows.map(mapRow).filter(r => r.first_name != null) as Parameters<typeof importLeads>[0]
 
-  function handleFormSuccess() {
-    closeForm()
-    router.refresh()
+      if (mapped.length === 0) {
+        setImportResult({ error: 'Aucun lead valide trouvé. Vérifiez que votre CSV contient une colonne "prénom" ou "first_name".' })
+        return
+      }
+
+      startImport(async () => {
+        const result = await importLeads(mapped)
+        setImportResult(result ?? { error: 'Erreur inconnue' })
+        if (result && 'count' in result) router.refresh()
+      })
+    }
+    reader.readAsText(file, 'UTF-8')
   }
 
   return (
@@ -49,9 +109,7 @@ export function LeadsView({ leads }: { leads: Lead[] }) {
             <button
               onClick={() => setView('kanban')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                view === 'kanban'
-                  ? 'bg-white text-[#1B2B4B] shadow-sm'
-                  : 'text-zinc-500 hover:text-zinc-700'
+                view === 'kanban' ? 'bg-white text-[#1B2B4B] shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
               }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -62,9 +120,7 @@ export function LeadsView({ leads }: { leads: Lead[] }) {
             <button
               onClick={() => setView('list')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                view === 'list'
-                  ? 'bg-white text-[#1B2B4B] shadow-sm'
-                  : 'text-zinc-500 hover:text-zinc-700'
+                view === 'list' ? 'bg-white text-[#1B2B4B] shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
               }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -74,7 +130,40 @@ export function LeadsView({ leads }: { leads: Lead[] }) {
             </button>
           </div>
 
-          {/* Add lead button */}
+          {/* Export CSV — Agence plan */}
+          {isAgence && (
+            <a
+              href="/api/export/leads"
+              download
+              className="flex items-center gap-1.5 border border-zinc-200 bg-white text-zinc-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-zinc-50 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Exporter CSV
+            </a>
+          )}
+
+          {/* Import CSV */}
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={importing}
+            className="flex items-center gap-1.5 border border-zinc-200 bg-white text-zinc-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-zinc-50 transition-colors disabled:opacity-60"
+          >
+            {importing ? (
+              <span className="w-4 h-4 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            Importer CSV
+          </button>
+
+          {/* New lead */}
           <button
             onClick={openCreate}
             className="flex items-center gap-1.5 bg-[#FF6B35] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#FF8C5A] transition-colors"
@@ -87,6 +176,30 @@ export function LeadsView({ leads }: { leads: Lead[] }) {
         </div>
       </div>
 
+      {/* Import result banner */}
+      {importResult && (
+        <div className={`mb-4 flex items-start gap-3 px-4 py-3 rounded-xl text-sm border ${
+          'count' in importResult
+            ? 'bg-green-50 border-green-100 text-green-700'
+            : 'bg-red-50 border-red-100 text-red-600'
+        }`}>
+          {'count' in importResult ? (
+            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          )}
+          <span className="flex-1">
+            {'count' in importResult
+              ? `${importResult.count} lead${importResult.count > 1 ? 's' : ''} importé${importResult.count > 1 ? 's' : ''} avec succès.`
+              : importResult.error
+            }
+          </span>
+          <button onClick={() => setImportResult(null)} className="shrink-0 opacity-60 hover:opacity-100">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Main content */}
       {view === 'kanban' ? (
         <LeadKanban initialLeads={leads} onEdit={openEdit} />
@@ -94,7 +207,6 @@ export function LeadsView({ leads }: { leads: Lead[] }) {
         <LeadList leads={leads} onEdit={openEdit} />
       )}
 
-      {/* Create / Edit form modal */}
       {formState.open && (
         <LeadForm
           lead={formState.lead}

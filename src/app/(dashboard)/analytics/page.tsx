@@ -27,9 +27,11 @@ export default async function AnalyticsPage() {
     .select('plan')
     .single()
 
-  const isAgencePlan = subscription?.plan === 'agence'
+  const plan = subscription?.plan ?? 'starter'
+  const isAgencePlan = plan === 'agence'
+  const isProOrAgence = plan === 'pro' || plan === 'agence'
 
-  if (!isAgencePlan) {
+  if (!isProOrAgence) {
     return (
       <div>
         <h1 className="text-2xl font-semibold text-[#1B2B4B] mb-6">Analytics</h1>
@@ -39,16 +41,128 @@ export default async function AnalyticsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <p className="text-sm font-medium text-[#1B2B4B] mb-1">Plan Agence requis</p>
+          <p className="text-sm font-medium text-[#1B2B4B] mb-1">Plan Pro requis</p>
           <p className="text-xs text-zinc-400 mb-5 max-w-xs">
-            Les analytics avancés sont disponibles à partir du plan Agence à 149€/mois.
+            Les statistiques sont disponibles à partir du plan Pro à 79€/mois.
           </p>
           <a
             href="/settings/billing"
             className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-lg hover:bg-[#FF8C5A] transition-colors"
           >
-            Passer au plan Agence
+            Passer au plan Pro
           </a>
+        </div>
+      </div>
+    )
+  }
+
+  // Pro plan: basic analytics (source conversion + incoming messages by hour)
+  if (!isAgencePlan) {
+    const [{ data: leads }, { data: messages }] = await Promise.all([
+      supabase.from('leads').select('status, source'),
+      supabase.from('messages').select('sent_at').eq('direction', 'entrant'),
+    ])
+
+    const allLeads = leads ?? []
+    const wonLeads = allLeads.filter(l => l.status === 'gagne')
+
+    const sourceMap: Record<string, { total: number; won: number }> = {}
+    for (const l of allLeads) {
+      if (!sourceMap[l.source]) sourceMap[l.source] = { total: 0, won: 0 }
+      sourceMap[l.source].total++
+      if (l.status === 'gagne') sourceMap[l.source].won++
+    }
+    const sourceStats = Object.entries(sourceMap)
+      .map(([source, { total, won }]) => ({
+        source,
+        total,
+        won,
+        rate: total > 0 ? Math.round((won / total) * 100) : 0,
+      }))
+      .sort((a, b) => b.rate - a.rate)
+
+    const hourMap: Record<number, number> = {}
+    for (const m of messages ?? []) {
+      if (!m.sent_at) continue
+      const h = new Date(m.sent_at).getHours()
+      hourMap[h] = (hourMap[h] ?? 0) + 1
+    }
+    const maxHourCount = Math.max(...Object.values(hourMap), 1)
+    const hourStats = Array.from({ length: 24 }, (_, h) => ({
+      hour: h,
+      count: hourMap[h] ?? 0,
+      pct: Math.round(((hourMap[h] ?? 0) / maxHourCount) * 100),
+    }))
+    const peakHour = hourStats.reduce((best, cur) => cur.count > best.count ? cur : best, hourStats[0])
+
+    const SOURCE_LABELS: Record<string, string> = {
+      widget: 'Widget', seloger: 'SeLoger', leboncoin: 'Leboncoin',
+      logicimmo: 'Logic-Immo', manuel: 'Manuel', import: 'Import', autre: 'Autre',
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-[#1B2B4B]">Analytics</h1>
+            <p className="text-sm text-zinc-400 mt-0.5">Statistiques basiques · plan Pro</p>
+          </div>
+          <span className="text-xs bg-[#f0f3f9] text-[#1B2B4B] px-3 py-1 rounded-full font-medium">
+            {allLeads.length} leads · {wonLeads.length} gagnés
+          </span>
+        </div>
+
+        <section className="bg-white rounded-xl border border-zinc-200 p-6">
+          <h2 className="font-semibold text-zinc-800 mb-4">Taux de conversion par source</h2>
+          {sourceStats.length === 0 ? (
+            <p className="text-sm text-zinc-400">Pas encore de données</p>
+          ) : (
+            <div className="space-y-3">
+              {sourceStats.map(s => (
+                <div key={s.source}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-zinc-700">{SOURCE_LABELS[s.source] ?? s.source}</span>
+                    <span className="text-sm text-zinc-500">
+                      {s.won}/{s.total} — <span className="font-semibold text-[#1B2B4B]">{s.rate}%</span>
+                    </span>
+                  </div>
+                  <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#FF6B35] rounded-full" style={{ width: `${s.rate}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="bg-white rounded-xl border border-zinc-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-zinc-800">Messages entrants par heure</h2>
+            {peakHour.count > 0 && (
+              <span className="text-xs text-zinc-500">
+                Pic à <span className="font-semibold text-[#1B2B4B]">{peakHour.hour}h</span>
+              </span>
+            )}
+          </div>
+          <div className="flex items-end gap-0.5 h-24">
+            {hourStats.map(h => (
+              <div key={h.hour} className="flex-1 flex flex-col items-center">
+                <div
+                  className={`w-full rounded-sm ${h.count > 0 ? 'bg-[#1B2B4B]' : 'bg-zinc-100'}`}
+                  style={{ height: `${Math.max(h.pct, h.count > 0 ? 6 : 0)}%` }}
+                  title={`${h.hour}h : ${h.count} msg`}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-1 text-[10px] text-zinc-400">
+            <span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span>
+          </div>
+        </section>
+
+        <div className="bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 text-sm text-amber-700">
+          Passez au plan <strong>Agence</strong> pour accéder aux analytics avancés : prédiction IA, stats par agent et heatmap.{' '}
+          <a href="/settings/billing" className="underline font-medium">Voir les plans →</a>
         </div>
       </div>
     )
@@ -57,7 +171,7 @@ export default async function AnalyticsPage() {
   // Fetch all leads
   const { data: leads } = await supabase
     .from('leads')
-    .select('status, source, created_at, assigned_to')
+    .select('status, source, created_at, assigned_to, ai_score')
     .order('created_at', { ascending: true })
 
   const allLeads = leads ?? []
@@ -139,6 +253,7 @@ export default async function AnalyticsPage() {
       const agentLeads = allLeads.filter((l) => l.assigned_to === p.id)
       const won = agentLeads.filter((l) => l.status === 'gagne').length
       return {
+        id: p.id,
         name: p.full_name ?? 'Sans nom',
         email: p.email ?? '—',
         total: agentLeads.length,
@@ -146,6 +261,32 @@ export default async function AnalyticsPage() {
         rate: agentLeads.length > 0 ? Math.round((won / agentLeads.length) * 100) : 0,
       }
     }).sort((a, b) => b.total - a.total)
+  }
+
+  // AI prediction
+  const scored = allLeads.filter(l => l.ai_score != null)
+  const aiPrediction = scored.length > 0 ? {
+    avgScore: Math.round(scored.reduce((s, l) => s + (l.ai_score ?? 0), 0) / scored.length * 10) / 10,
+    highPotential: scored.filter(l => (l.ai_score ?? 0) >= 7).length,
+    totalScored: scored.length,
+    distribution: {
+      low: scored.filter(l => (l.ai_score ?? 0) <= 3).length,
+      medium: scored.filter(l => (l.ai_score ?? 0) >= 4 && (l.ai_score ?? 0) <= 6).length,
+      high: scored.filter(l => (l.ai_score ?? 0) >= 7).length,
+    },
+  } : undefined
+
+  // Response heatmap: [day 0-6][hour 0-23]
+  const { data: inboundMessages } = await supabase
+    .from('messages')
+    .select('sent_at')
+    .eq('direction', 'entrant')
+
+  const heatmap: number[][] = Array.from({ length: 7 }, () => new Array(24).fill(0))
+  for (const m of inboundMessages ?? []) {
+    if (!m.sent_at) continue
+    const d = new Date(m.sent_at)
+    heatmap[d.getDay()][d.getHours()]++
   }
 
   const analyticsData: AnalyticsData = {
@@ -159,6 +300,8 @@ export default async function AnalyticsPage() {
     byStatus,
     weeklyTrend,
     agentStats,
+    aiPrediction,
+    responseHeatmap: heatmap,
   }
 
   return <AnalyticsDashboard data={analyticsData} />

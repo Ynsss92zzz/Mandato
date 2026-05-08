@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { CopyButton } from '@/components/settings/copy-button'
-import { Mail, Code2 } from 'lucide-react'
+import { Mail, Code2, Inbox } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Intégrations' }
 
@@ -20,6 +20,19 @@ export default async function IntegrationsPage() {
 
   const agencyId = member?.agency_id ?? ''
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mandato-app.vercel.app'
+
+  // Fetch plan to conditionally show email import (Pro+)
+  const { data: subData } = agencyId
+    ? await supabase.from('subscriptions').select('plan').eq('agency_id', agencyId).single()
+    : { data: null }
+  const plan = (subData?.plan ?? 'starter') as 'starter' | 'pro' | 'agence'
+
+  // Fetch agency slug for the inbound email address
+  const { data: agency } = agencyId
+    ? await supabase.from('agencies').select('slug').eq('id', agencyId).single()
+    : { data: null }
+
+  const inboundEmail = agency?.slug ? `leads-${agency.slug}@mandato.fr` : null
 
   const scriptCode = `<!-- Widget Mandato -->
 <script
@@ -68,6 +81,48 @@ export default async function IntegrationsPage() {
           </div>
         </div>
       </div>
+
+      {/* Inbound email (Pro+) */}
+      {(plan === 'pro' || plan === 'agence') && inboundEmail ? (
+        <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
+          <div className="px-6 py-5 border-b border-zinc-100 flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#f0f3f9] rounded-xl flex items-center justify-center flex-none">
+              <Inbox className="w-5 h-5 text-[#1B2B4B]" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-zinc-800">Import automatique par email</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">Tout email reçu à cette adresse crée automatiquement un lead</p>
+            </div>
+          </div>
+          <div className="px-6 py-5 space-y-3">
+            <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3">
+              <code className="flex-1 text-sm font-mono text-[#1B2B4B]">{inboundEmail}</code>
+              <CopyButton text={inboundEmail} />
+            </div>
+            <p className="text-sm text-zinc-500 leading-relaxed">
+              Transmettez cette adresse à vos portails immobiliers (SeLoger, Leboncoin…) pour qu&apos;ils envoient
+              les notifications de contact directement ici. Chaque email devient un lead dans Mandato.
+            </p>
+            <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs text-amber-700">
+              Nécessite la configuration des MX de <strong>mandato.fr</strong> avec votre service email entrant (Resend, Mailgun, SendGrid).
+              Contactez-nous pour l&apos;activation.
+            </div>
+          </div>
+        </div>
+      ) : plan === 'starter' ? (
+        <div className="bg-white rounded-2xl border border-zinc-200 px-6 py-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold text-zinc-800 flex items-center gap-2">
+              <Inbox className="w-4 h-4 text-zinc-400" />
+              Import automatique par email
+            </p>
+            <p className="text-sm text-zinc-400 mt-0.5">Disponible à partir du plan Pro</p>
+          </div>
+          <a href="/settings/billing" className="text-sm font-medium text-[#FF6B35] hover:underline whitespace-nowrap">
+            Passer au Pro →
+          </a>
+        </div>
+      ) : null}
 
       {/* Contact card */}
       <div className="bg-white rounded-2xl border border-zinc-200 px-6 py-5 flex items-center justify-between gap-4 flex-wrap">

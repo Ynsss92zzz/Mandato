@@ -9,7 +9,13 @@
       "Bash(xargs grep *)",
       "Bash(Remove-Item \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\src\\\\app\\\\page.tsx\" -Force)",
       "Bash(npm run *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(Test-Path \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\vercel.json\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\src\\\\app\\\\api\\\\export\\\\leads\" \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\src\\\\app\\\\api\\\\export\\\\appointments\" \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\src\\\\app\\\\\\(dashboard\\)\\\\analytics\\\\agent\\\\[agentId]\")",
+      "Bash(node -e ' *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\ynss9\\immo-saas\\src\\app\\(dashboard)\\analytics\\agent"
     ]
   }
 }

@@ -154,6 +154,49 @@ export async function deleteLead(leadId: string) {
   return { success: true }
 }
 
+export async function importLeads(rows: Array<{
+  first_name: string
+  last_name?: string | null
+  email?: string | null
+  phone?: string | null
+  budget?: number | null
+  message?: string | null
+}>) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const agencyId = await getAgencyId(supabase, user.id)
+  if (!agencyId) return { error: 'Agence introuvable' }
+
+  const toInsert = rows
+    .filter(r => r.first_name?.trim())
+    .map(r => ({
+      agency_id: agencyId,
+      first_name: r.first_name.trim(),
+      last_name: r.last_name?.trim() || null,
+      email: r.email?.trim() || null,
+      phone: r.phone?.trim() || null,
+      budget: typeof r.budget === 'number' && !isNaN(r.budget) ? r.budget : null,
+      message: r.message?.trim() || null,
+      source: 'import' as LeadSource,
+      status: 'nouveau' as LeadStatus,
+      tags: [],
+    }))
+
+  if (toInsert.length === 0) return { error: 'Aucun lead valide trouvé. Vérifiez que votre CSV contient une colonne "prénom" ou "first_name".' }
+
+  const { data, error } = await supabase
+    .from('leads')
+    .insert(toInsert)
+    .select('id')
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/leads')
+  return { count: data?.length ?? 0 }
+}
+
 export async function qualifyLeadWithAI(leadId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
