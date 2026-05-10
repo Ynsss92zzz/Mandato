@@ -154,7 +154,10 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
     }
     startEmailChangeTransition(async () => {
       const supabase = createClient()
-      const { error } = await supabase.auth.updateUser({ email: trimmed })
+      const { error } = await supabase.auth.updateUser(
+        { email: trimmed },
+        { emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/settings` },
+      )
       if (error) {
         if (error.message.toLowerCase().includes('already')) {
           setEmailChangeError('Cette adresse email est déjà utilisée.')
