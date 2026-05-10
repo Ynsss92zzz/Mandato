@@ -6,6 +6,10 @@
 
   "crons": [
     {
+      "path": "/api/cron/morning-briefing",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/cron/sequences",
       "schedule": "0 9 * * *"
     },

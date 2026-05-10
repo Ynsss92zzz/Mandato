@@ -22,9 +22,11 @@ const COLUMNS: { status: LeadStatus; label: string; dotColor: string }[] = [
 export function LeadKanban({
   initialLeads,
   onEdit,
+  showHot = false,
 }: {
   initialLeads: Lead[]
   onEdit: (lead: Lead) => void
+  showHot?: boolean
 }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [draggedId, setDraggedId] = useState<string | null>(null)
@@ -137,6 +139,7 @@ export function LeadKanban({
                     lead={lead}
                     onDragStart={handleDragStart}
                     onClick={() => router.push(`/leads/${lead.id}`)}
+                    showHot={showHot}
                   />
                 </div>
               ))}

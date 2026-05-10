@@ -42,23 +42,32 @@ export function LeadCard({
   lead,
   onDragStart,
   onClick,
+  showHot = false,
 }: {
   lead: Lead
   onDragStart: (e: React.DragEvent, leadId: string) => void
   onClick: (lead: Lead) => void
+  showHot?: boolean
 }) {
   const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
   const source = lead.source as LeadSource
+  const isHot = showHot && (lead.ai_score ?? 0) > 7
 
   return (
     <div
       draggable
       onDragStart={(e) => onDragStart(e, lead.id)}
       onClick={() => onClick(lead)}
-      className="bg-white rounded-lg border border-zinc-200 p-3 cursor-grab active:cursor-grabbing hover:border-[#1B2B4B]/30 hover:shadow-sm transition-all select-none group"
+      className={`bg-white rounded-lg border p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all select-none group ${
+        isHot
+          ? 'border-orange-300 ring-1 ring-orange-200 hover:border-orange-400'
+          : 'border-zinc-200 hover:border-[#1B2B4B]/30'
+      }`}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="text-sm font-semibold text-[#1B2B4B] truncate leading-tight">{fullName}</p>
+        <p className="text-sm font-semibold text-[#1B2B4B] truncate leading-tight">
+          {isHot && <span className="mr-1">🔥</span>}{fullName}
+        </p>
         <ScoreBadge score={lead.ai_score} />
       </div>
 

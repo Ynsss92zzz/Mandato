@@ -83,6 +83,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
   const [notesSaved, setNotesSaved] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [estimatedPrice, setEstimatedPrice] = useState(initialLead.budget ? String(initialLead.budget) : '')
   const [draftChannel, setDraftChannel] = useState<MessageChannel>('email')
   const [draftContext, setDraftContext] = useState('')
   const [draftedMessage, setDraftedMessage] = useState<string | null>(null)
@@ -179,6 +180,10 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
     lead.ai_score >= 7 ? 'text-green-600' :
     lead.ai_score >= 4 ? 'text-amber-600' :
     'text-red-600'
+
+  const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+  const parsedPrice = estimatedPrice ? parseFloat(estimatedPrice.replace(/\s/g, '').replace(',', '.')) : NaN
+  const commission = !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice * 0.03 : null
 
   return (
     <div className="max-w-5xl">
@@ -277,6 +282,39 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
             >
               {isSavingNotes ? 'Enregistrement...' : 'Enregistrer les notes'}
             </button>
+          </div>
+
+          {/* Commission calculator */}
+          <div className="bg-white rounded-xl border border-zinc-200 p-5">
+            <h2 className="text-sm font-semibold text-[#1B2B4B] mb-4">Calculateur de commission</h2>
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
+                <label className="text-xs text-zinc-400 mb-1.5 block">Prix de vente estimé (€)</label>
+                <input
+                  type="number"
+                  value={estimatedPrice}
+                  onChange={(e) => setEstimatedPrice(e.target.value)}
+                  placeholder="Ex : 350 000"
+                  className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10 transition-colors"
+                />
+                {lead.budget && !estimatedPrice && (
+                  <button
+                    onClick={() => setEstimatedPrice(String(lead.budget))}
+                    className="mt-1.5 text-xs text-[#FF6B35] hover:underline"
+                  >
+                    Utiliser le budget déclaré ({fmt.format(lead.budget)})
+                  </button>
+                )}
+              </div>
+              <div className="text-right shrink-0 pb-0.5">
+                <p className="text-xs text-zinc-400 mb-0.5">Commission (3%)</p>
+                {commission !== null ? (
+                  <p className="text-2xl font-bold text-green-600">{fmt.format(commission)}</p>
+                ) : (
+                  <p className="text-2xl font-bold text-zinc-200">—</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Draft message */}

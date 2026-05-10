@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { LeadDetail } from '@/components/leads/lead-detail'
+import { LeadTimeline } from '@/components/leads/lead-timeline'
 
 export async function generateMetadata({
   params,
@@ -51,6 +52,9 @@ export default async function LeadDetailPage({
         </Link>
       </div>
       <LeadDetail lead={lead} />
+      <div className="mt-4 max-w-5xl">
+        <LeadTimeline lead={lead} />
+      </div>
     </div>
   )
 }

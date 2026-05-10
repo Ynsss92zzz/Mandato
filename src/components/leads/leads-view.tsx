@@ -54,7 +54,9 @@ function mapRow(row: Record<string, string>) {
   }
 }
 
-export function LeadsView({ leads, isAgence = false }: { leads: Lead[]; isAgence?: boolean }) {
+export function LeadsView({ leads, plan = 'starter' }: { leads: Lead[]; plan?: 'starter' | 'pro' | 'agence' }) {
+  const isAgence = plan === 'agence'
+  const showHot = plan === 'pro' || plan === 'agence'
   const [view, setView] = useState<View>('kanban')
   const [formState, setFormState] = useState<{ open: boolean; lead?: Lead }>({ open: false })
   const [importResult, setImportResult] = useState<ImportResult>(null)
@@ -202,9 +204,9 @@ export function LeadsView({ leads, isAgence = false }: { leads: Lead[]; isAgence
 
       {/* Main content */}
       {view === 'kanban' ? (
-        <LeadKanban initialLeads={leads} onEdit={openEdit} />
+        <LeadKanban initialLeads={leads} onEdit={openEdit} showHot={showHot} />
       ) : (
-        <LeadList leads={leads} onEdit={openEdit} />
+        <LeadList leads={leads} onEdit={openEdit} showHot={showHot} />
       )}
 
       {formState.open && (

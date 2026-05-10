@@ -46,9 +46,11 @@ function ScoreCell({ score }: { score: number | null }) {
 export function LeadList({
   leads,
   onEdit,
+  showHot = false,
 }: {
   leads: Lead[]
   onEdit: (lead: Lead) => void
+  showHot?: boolean
 }) {
   const router = useRouter()
 
@@ -86,22 +88,23 @@ export function LeadList({
               const source = lead.source as LeadSource
               const statusCfg = STATUS_CONFIG[status]
 
+              const isHot = showHot && (lead.ai_score ?? 0) > 7
               return (
                 <tr
                   key={lead.id}
-                  className="hover:bg-zinc-50/50 transition-colors cursor-pointer"
+                  className={`transition-colors cursor-pointer ${isHot ? 'bg-orange-50/40 hover:bg-orange-50' : 'hover:bg-zinc-50/50'}`}
                   onClick={() => router.push(`/leads/${lead.id}`)}
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#1B2B4B]/10 flex items-center justify-center flex-none">
-                        <span className="text-xs font-semibold text-[#1B2B4B]">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-none ${isHot ? 'bg-orange-100' : 'bg-[#1B2B4B]/10'}`}>
+                        <span className={`text-xs font-semibold ${isHot ? 'text-orange-700' : 'text-[#1B2B4B]'}`}>
                           {getInitials(lead.first_name, lead.last_name)}
                         </span>
                       </div>
                       <div className="min-w-0">
                         <p className="font-medium text-[#1B2B4B] truncate">
-                          {lead.first_name} {lead.last_name ?? ''}
+                          {isHot && <span className="mr-1">🔥</span>}{lead.first_name} {lead.last_name ?? ''}
                         </p>
                         {lead.location_desired && (
                           <p className="text-xs text-zinc-400 truncate">{lead.location_desired}</p>

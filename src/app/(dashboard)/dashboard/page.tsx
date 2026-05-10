@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { SmartAlerts } from '@/components/dashboard/smart-alerts'
 import {
   Users,
   TrendingUp,
@@ -96,6 +97,8 @@ export default async function DashboardPage() {
     { count: leadsGagnes },
     { data: recentLeads },
     { data: subscription },
+    { data: hotLeads },
+    { data: activeLeadsWithBudget },
   ] = await Promise.all([
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).gte('created_at', startOfToday),
@@ -105,13 +108,21 @@ export default async function DashboardPage() {
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'gagne'),
     supabase.from('leads').select('id, first_name, last_name, email, status, source, ai_score, created_at').order('created_at', { ascending: false }).limit(8),
     supabase.from('subscriptions').select('plan, status, leads_this_month, trial_ends_at').single(),
+    supabase.from('leads').select('id, first_name, last_name, phone, budget, ai_score').gt('ai_score', 7).in('status', ['nouveau', 'contacte', 'qualifie', 'rdv_planifie', 'proposition']).order('ai_score', { ascending: false }).limit(3),
+    supabase.from('leads').select('budget').in('status', ['nouveau', 'contacte', 'qualifie', 'rdv_planifie', 'proposition']).not('budget', 'is', null),
   ])
 
   const conversionRate = totalLeads ? Math.round(((leadsGagnes ?? 0) / totalLeads) * 100) : 0
   const monthTrend = leadsLastMonth ? Math.round((((leadsThisMonth ?? 0) - leadsLastMonth) / leadsLastMonth) * 100) : 0
 
-  // Alerte quota Starter
+  const totalBudget = (activeLeadsWithBudget ?? []).reduce((sum, l) => sum + (l.budget ?? 0), 0)
+  const potentialCommission = totalBudget * 0.03
+  const fmtCurrency = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+
   const isStarter = subscription?.plan === 'starter'
+  const isProOrAgence = subscription?.plan === 'pro' || subscription?.plan === 'agence'
+
+  // Alerte quota Starter
   const leadsQuotaUsed = subscription?.leads_this_month ?? 0
   const leadsQuotaPercent = isStarter ? Math.round((leadsQuotaUsed / 50) * 100) : 0
 
@@ -163,6 +174,51 @@ export default async function DashboardPage() {
           <Link href="/settings/billing" className="shrink-0 bg-[#FF6B35] text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-[#FF8C5A] transition-colors">
             Passer en Pro
           </Link>
+        </div>
+      )}
+
+      {/* Alertes intelligentes */}
+      <SmartAlerts />
+
+      {/* Leads chauds — Pro/Agence */}
+      {isProOrAgence && hotLeads && hotLeads.length > 0 && (
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-orange-800 flex items-center gap-2">
+              🔥 Leads chauds — à appeler en priorité
+            </h2>
+            <Link href="/leads" className="text-xs text-orange-600 hover:underline font-medium">
+              Voir tous →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {hotLeads.map((lead) => {
+              const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
+              const budget = lead.budget
+                ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(lead.budget)
+                : null
+              return (
+                <Link
+                  key={lead.id}
+                  href={`/leads/${lead.id}`}
+                  className="bg-white rounded-xl border border-orange-200 p-4 hover:border-orange-400 hover:shadow-sm transition-all"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <p className="text-sm font-semibold text-[#1B2B4B] truncate">{name}</p>
+                    <span className="ml-2 shrink-0 text-xs font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">
+                      {lead.ai_score}/10
+                    </span>
+                  </div>
+                  {lead.phone && (
+                    <p className="text-xs text-zinc-500 mb-1">📱 {lead.phone}</p>
+                  )}
+                  {budget && (
+                    <p className="text-xs text-zinc-500">💰 {budget}</p>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -296,6 +352,7 @@ export default async function DashboardPage() {
                 { label: 'Leads créés', value: leadsThisMonth ?? 0, icon: '👤' },
                 { label: 'Leads gagnés', value: leadsGagnes ?? 0, icon: '🏆' },
                 { label: 'Conversion', value: `${conversionRate}%`, icon: '📈' },
+                ...(potentialCommission > 0 ? [{ label: 'Commission potentielle', value: fmtCurrency.format(potentialCommission), icon: '💰' }] : []),
               ].map(({ label, value, icon }) => (
                 <div key={label} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

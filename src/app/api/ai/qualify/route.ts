@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { qualifyLead } from '@/lib/ai/qualify-lead'
+import { sendPushToMany, type StoredSubscription } from '@/lib/push'
 import type { Database } from '@/types/database'
 
 export async function POST(request: NextRequest) {
@@ -53,6 +54,31 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Push notification for hot leads (score > 8) — Pro/Agence plans only
+  if (analysis.score > 8) {
+    const { data: member } = await supabase
+      .from('agency_members')
+      .select('agency_id')
+      .eq('profile_id', user.id)
+      .single()
+
+    if (member?.agency_id) {
+      const { data: pushSubs } = await supabase
+        .from('push_subscriptions')
+        .select('endpoint, p256dh, auth')
+        .eq('agency_id', member.agency_id)
+
+      if (pushSubs && pushSubs.length > 0) {
+        const leadName = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
+        await sendPushToMany(pushSubs as StoredSubscription[], {
+          title: '🔥 Lead chaud détecté !',
+          body: `${leadName} — Score ${analysis.score}/10 — À appeler en priorité`,
+          url: `/leads/${leadId}`,
+        })
+      }
+    }
   }
 
   return NextResponse.json({ analysis })

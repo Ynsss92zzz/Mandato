@@ -12,7 +12,7 @@ export default async function LeadsPage() {
     supabase.from('subscriptions').select('plan').single(),
   ])
 
-  const isAgence = sub?.plan === 'agence'
+  const plan = (sub?.plan ?? 'starter') as 'starter' | 'pro' | 'agence'
 
-  return <LeadsView leads={leads ?? []} isAgence={isAgence} />
+  return <LeadsView leads={leads ?? []} plan={plan} />
 }
