@@ -47,6 +47,11 @@ export default async function SequenceEditorPage({
     steps = seqSteps ?? []
   }
 
+  const { data: templates } = await supabase
+    .from('message_templates')
+    .select('id, name, channel, subject, body')
+    .order('name', { ascending: true })
+
   return (
     <div>
       <div className="mb-5">
@@ -76,6 +81,7 @@ export default async function SequenceEditorPage({
         sequenceId={id}
         sequence={sequence ?? undefined}
         initialSteps={steps ?? undefined}
+        templates={templates ?? []}
       />
     </div>
   )

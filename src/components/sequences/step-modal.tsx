@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { MessageChannel } from '@/types'
 import type { StepDraft } from '@/actions/sequences'
+import type { MessageTemplate } from './sequence-editor'
 
 const CHANNELS: { value: MessageChannel; label: string; icon: string }[] = [
   { value: 'email', label: 'Email', icon: '✉️' },
@@ -26,11 +27,12 @@ const inputCls = 'w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm tex
 
 interface StepModalProps {
   step?: StepDraft & { index?: number }
+  templates?: MessageTemplate[]
   onSave: (step: StepDraft) => void
   onClose: () => void
 }
 
-export function StepModal({ step, onSave, onClose }: StepModalProps) {
+export function StepModal({ step, templates = [], onSave, onClose }: StepModalProps) {
   const isEdit = !!step
   const [channel, setChannel] = useState<MessageChannel>(step?.channel ?? 'email')
   const [delayHours, setDelayHours] = useState(step?.delay_hours ?? 24)
@@ -139,6 +141,37 @@ export function StepModal({ step, onSave, onClose }: StepModalProps) {
               </div>
             )}
           </div>
+
+          {/* Template selector */}
+          {channel !== 'note' && (() => {
+            const filtered = templates.filter((t) => t.channel === channel)
+            if (filtered.length === 0) return null
+            return (
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 mb-1">
+                  Utiliser un template existant
+                </label>
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const tpl = filtered.find((t) => t.id === e.target.value)
+                    if (!tpl) return
+                    setSubject(tpl.subject ?? '')
+                    setContent(tpl.body)
+                  }}
+                  className={inputCls}
+                >
+                  <option value="" disabled>— Sélectionner un template —</option>
+                  {filtered.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Le sujet et le contenu seront remplacés par ceux du template.
+                </p>
+              </div>
+            )
+          })()}
 
           {/* Sujet (email uniquement) */}
           {channel === 'email' && (

@@ -28,6 +28,14 @@ type Sequence = Database['public']['Tables']['sequences']['Row']
 type SequenceStep = Database['public']['Tables']['sequence_steps']['Row']
 type SequenceStatus = 'actif' | 'pause' | 'archive'
 
+export interface MessageTemplate {
+  id: string
+  name: string
+  channel: string
+  subject: string | null
+  body: string
+}
+
 const CHANNEL_ICONS: Record<MessageChannel, string> = {
   email: '✉️',
   sms: '💬',
@@ -159,9 +167,10 @@ interface SequenceEditorProps {
   sequenceId: string
   sequence?: Sequence
   initialSteps?: SequenceStep[]
+  templates?: MessageTemplate[]
 }
 
-export function SequenceEditor({ sequenceId, sequence, initialSteps = [] }: SequenceEditorProps) {
+export function SequenceEditor({ sequenceId, sequence, initialSteps = [], templates = [] }: SequenceEditorProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -361,6 +370,7 @@ export function SequenceEditor({ sequenceId, sequence, initialSteps = [] }: Sequ
       {stepModal.open && (
         <StepModal
           step={stepModal.editIndex !== undefined ? { ...steps[stepModal.editIndex], index: stepModal.editIndex } : undefined}
+          templates={templates}
           onSave={(step) => {
             if (stepModal.editIndex !== undefined) {
               handleEditStep(stepModal.editIndex, step)

@@ -8,8 +8,14 @@ export const runtime = 'nodejs'
 // Vercel Cron — runs daily at 9h UTC (vercel.json)
 // Processes pending sequence enrollments and sends messages when delay has elapsed
 export async function GET(request: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET?.trim()
+  if (!cronSecret) {
+    console.error('[sequences cron] CRON_SECRET is not set in environment variables')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const auth = request.headers.get('authorization')
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (auth !== `Bearer ${cronSecret}`) {
+    console.error('[sequences cron] Authorization mismatch — expected Bearer <CRON_SECRET>, received:', auth?.slice(0, 15) ?? '(none)')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
