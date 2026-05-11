@@ -49,9 +49,11 @@ export function Sidebar({ agencyName, plan }: SidebarProps) {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
         <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-[#FF6B35] rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">M</span>
-          </div>
+          <img
+            src="/logo.png"
+            alt="Mandato"
+            className="w-8 h-8 rounded-lg object-contain flex-shrink-0"
+          />
           <span className="text-white font-bold text-lg tracking-tight">Mandato</span>
         </Link>
       </div>

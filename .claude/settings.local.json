@@ -13,7 +13,8 @@
       "Bash(Test-Path \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\vercel.json\")",
       "Bash(mkdir -p \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\src\\\\app\\\\api\\\\export\\\\leads\" \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\src\\\\app\\\\api\\\\export\\\\appointments\" \"c:\\\\Users\\\\ynss9\\\\immo-saas\\\\src\\\\app\\\\\\(dashboard\\)\\\\analytics\\\\agent\\\\[agentId]\")",
       "Bash(node -e ' *)",
-      "Bash(mkdir -p \"c:/Users/ynss9/immo-saas/src/lib/sequences\")"
+      "Bash(mkdir -p \"c:/Users/ynss9/immo-saas/src/lib/sequences\")",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('hex'\\)\\)\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\ynss9\\immo-saas\\src\\app\\(dashboard)\\analytics\\agent",
