@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { qualifyLead } from '@/lib/ai/qualify-lead'
+import { autoEnrollNewLead } from '@/lib/sequences/auto-enroll'
 import type { LeadStatus, LeadSource } from '@/types'
 
 async function getAgencyId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
@@ -45,6 +46,11 @@ export async function createLead(formData: FormData) {
     .single()
 
   if (error) return { error: error.message }
+
+  // Trigger sequences with trigger_on='lead_created' — fire-and-forget
+  autoEnrollNewLead(agencyId, data.id).catch((err) =>
+    console.error('[createLead] auto-enroll failed', err)
+  )
 
   revalidatePath('/leads')
   return { lead: data }

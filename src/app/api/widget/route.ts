@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { autoEnrollNewLead } from '@/lib/sequences/auto-enroll'
 
 // Endpoint public pour recevoir les leads depuis le widget embed
 export async function POST(request: NextRequest) {
@@ -30,6 +31,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) throw error
+
+    // Trigger sequences with trigger_on='lead_created' — fire-and-forget
+    autoEnrollNewLead(agency_id, data.id).catch((err) =>
+      console.error('[widget] auto-enroll failed', err)
+    )
 
     return NextResponse.json({ success: true, lead_id: data.id })
   } catch {
