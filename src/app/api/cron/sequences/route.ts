@@ -19,6 +19,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Log env var presence so we can confirm config in Vercel logs
+  console.log('[sequences cron] env check — RESEND_API_KEY:', process.env.RESEND_API_KEY ? `set (${process.env.RESEND_API_KEY.slice(0, 8)}…)` : 'MISSING')
+  console.log('[sequences cron] env check — RESEND_FROM_EMAIL:', process.env.RESEND_FROM_EMAIL ?? '(using default noreply@mandato.fr)')
+  console.log('[sequences cron] env check — TWILIO_ACCOUNT_SID:', process.env.TWILIO_ACCOUNT_SID ? `set (${process.env.TWILIO_ACCOUNT_SID.slice(0, 8)}…)` : 'MISSING')
+  console.log('[sequences cron] env check — TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ?? 'MISSING')
+  console.log('[sequences cron] env check — TWILIO_WHATSAPP_NUMBER:', process.env.TWILIO_WHATSAPP_NUMBER ?? 'MISSING')
+
   const supabase = createAdminClient()
   const now = new Date().toISOString()
 

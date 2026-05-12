@@ -20,10 +20,11 @@ export async function sendEmail({
     text,
   })
   if (result.error) {
-    console.error('[resend] sendEmail error:', JSON.stringify(result.error))
-  } else {
-    console.log('[resend] sendEmail ok — id:', result.data?.id)
+    const msg = (result.error as { message?: string }).message ?? JSON.stringify(result.error)
+    console.error('[resend] sendEmail error:', msg, '| full:', JSON.stringify(result.error))
+    throw new Error(`Resend error: ${msg}`)
   }
+  console.log('[resend] sendEmail ok — id:', result.data?.id)
   return result
 }
 
