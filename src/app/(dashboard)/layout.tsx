@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { TopBar } from '@/components/dashboard/top-bar'
 import { PushProvider } from '@/components/dashboard/push-provider'
@@ -11,13 +12,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
-  // Auto-logout: sign out if the session persistence cookie is missing.
-  // mandato_rm is a session cookie (cleared on browser close) unless "Se souvenir de moi" was checked,
-  // in which case it has a 30-day Max-Age. If it's absent, the browser was closed without remember-me.
+  // Auto-logout: if mandato_rm is absent (browser closed without "Se souvenir de moi"),
+  // redirect to the signout Route Handler which can properly clear cookies.
+  // Never call signOut() directly in a Server Component — cookie writes are ignored there.
   const cookieStore = await cookies()
   if (!cookieStore.has('mandato_rm')) {
-    await supabase.auth.signOut()
-    redirect('/login')
+    redirect('/api/auth/signout')
   }
 
   // Redirect to onboarding if not yet completed
