@@ -1,6 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 
@@ -32,6 +33,51 @@ const ForgotSchema = z.object({
   email: z.string().email({ message: 'Email invalide' }),
 })
 
+// Known disposable email domains — basic abuse prevention
+const DISPOSABLE_DOMAINS = new Set([
+  'mailinator.com', 'guerrillamail.com', 'temp-mail.org', 'throwaway.email',
+  'yopmail.com', 'sharklasers.com', 'guerrillamailblock.com', 'grr.la',
+  'guerrillamail.info', 'trashmail.com', 'trashmail.me', 'tempmail.com',
+  'fakeinbox.com', 'maildrop.cc', 'dispostable.com', 'spamgourmet.com',
+  'getairmail.com', 'filzmail.com', 'DropMail.me', 'mohmal.com',
+  'tempr.email', 'discard.email', 'mailnull.com', 'spamspot.com',
+])
+
+function isDisposableEmail(email: string): boolean {
+  const domain = email.split('@')[1]?.toLowerCase()
+  return domain ? DISPOSABLE_DOMAINS.has(domain) : false
+}
+
+// ─── Cookie helpers ─────────────────────────────────────────────────────────
+
+const COOKIE_OPTS_BASE = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+}
+
+async function setRememberMeCookie(remember: boolean) {
+  const cookieStore = await cookies()
+  cookieStore.set('mandato_rm', '1', {
+    ...COOKIE_OPTS_BASE,
+    ...(remember ? { maxAge: 60 * 60 * 24 * 30 } : {}), // 30 days or session cookie
+  })
+}
+
+async function clearRememberMeCookie() {
+  const cookieStore = await cookies()
+  cookieStore.delete('mandato_rm')
+}
+
+async function setTrialUsedCookie() {
+  const cookieStore = await cookies()
+  cookieStore.set('mandato_trial_used', '1', {
+    ...COOKIE_OPTS_BASE,
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+  })
+}
+
 // ─── Actions ────────────────────────────────────────────────────────────────
 
 export async function login(state: AuthState, formData: FormData): Promise<AuthState> {
@@ -54,6 +100,9 @@ export async function login(state: AuthState, formData: FormData): Promise<AuthS
     return { error: 'Email ou mot de passe incorrect' }
   }
 
+  const rememberMe = formData.get('remember_me') === 'on'
+  await setRememberMeCookie(rememberMe)
+
   redirect('/dashboard')
 }
 
@@ -67,6 +116,17 @@ export async function signup(state: AuthState, formData: FormData): Promise<Auth
 
   if (!parsed.success) {
     return { errors: parsed.error.flatten().fieldErrors }
+  }
+
+  // Block disposable emails
+  if (isDisposableEmail(parsed.data.email)) {
+    return { error: 'Les adresses email temporaires ne sont pas acceptées.' }
+  }
+
+  // Block multiple trials from the same device
+  const cookieStore = await cookies()
+  if (cookieStore.has('mandato_trial_used')) {
+    return { error: 'Un essai gratuit a déjà été utilisé depuis cet appareil.' }
   }
 
   try {
@@ -111,6 +171,9 @@ export async function signup(state: AuthState, formData: FormData): Promise<Auth
       session: data.session ? 'present' : 'null',
     })
 
+    // Mark this device as having used a trial
+    await setTrialUsedCookie()
+
     return { success: 'Vérifiez votre email pour activer votre compte.' }
 
   } catch (err) {
@@ -154,6 +217,7 @@ export async function loginWithGoogle(): Promise<never> {
 }
 
 export async function logout(): Promise<never> {
+  await clearRememberMeCookie()
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/login')

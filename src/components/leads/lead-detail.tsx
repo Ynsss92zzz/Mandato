@@ -63,7 +63,6 @@ const INTENTION_LABELS: Record<string, string> = {
 const CHANNELS: { value: MessageChannel; label: string }[] = [
   { value: 'email', label: 'Email' },
   { value: 'sms', label: 'SMS' },
-  { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'note', label: 'Note interne' },
 ]
 

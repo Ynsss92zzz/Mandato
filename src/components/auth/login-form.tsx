@@ -76,6 +76,18 @@ export function LoginForm() {
           <FieldError messages={state?.errors?.password} />
         </div>
 
+        <div className="flex items-center gap-2">
+          <input
+            id="remember_me"
+            name="remember_me"
+            type="checkbox"
+            className="w-4 h-4 rounded border-zinc-300 text-[#1B2B4B] accent-[#1B2B4B]"
+          />
+          <label htmlFor="remember_me" className="text-sm text-zinc-600 select-none">
+            Se souvenir de moi
+          </label>
+        </div>
+
         <button
           type="submit"
           disabled={isPending}

@@ -8,7 +8,6 @@ import type { MessageTemplate } from './sequence-editor'
 const CHANNELS: { value: MessageChannel; label: string; icon: string }[] = [
   { value: 'email', label: 'Email', icon: '✉️' },
   { value: 'sms', label: 'SMS', icon: '💬' },
-  { value: 'whatsapp', label: 'WhatsApp', icon: '📱' },
   { value: 'note', label: 'Note interne', icon: '📝' },
 ]
 

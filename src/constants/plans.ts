@@ -3,12 +3,14 @@ export type PlanId = 'starter' | 'pro' | 'agence'
 export interface PlanLimits {
   leads_per_month: number
   agents: number
-  whatsapp: boolean
   sms: boolean
   multi_agents: boolean
   advanced_analytics: boolean
   pdf_reports: boolean
-  unlimited_templates: boolean
+  hot_leads: boolean
+  morning_briefing: boolean
+  pre_visit_sheet: boolean
+  priority_support: boolean
 }
 
 export interface Plan {
@@ -26,46 +28,52 @@ export const PLANS: Record<PlanId, Plan> = {
     price: 39,
     description: 'Pour démarrer et qualifier vos premiers leads',
     limits: {
-      leads_per_month: 50,
+      leads_per_month: 30,
       agents: 1,
-      whatsapp: false,
       sms: false,
       multi_agents: false,
       advanced_analytics: false,
       pdf_reports: false,
-      unlimited_templates: false,
+      hot_leads: false,
+      morning_briefing: false,
+      pre_visit_sheet: false,
+      priority_support: false,
     },
   },
   pro: {
     id: 'pro',
     name: 'Pro',
     price: 79,
-    description: 'Automatisation complète multi-canal',
+    description: 'Automatisation complète pour l\'agent ambitieux',
     limits: {
-      leads_per_month: Infinity,
-      agents: 1,
-      whatsapp: true,
+      leads_per_month: 80,
+      agents: 3,
       sms: true,
       multi_agents: false,
-      advanced_analytics: false,
+      advanced_analytics: true,
       pdf_reports: false,
-      unlimited_templates: true,
+      hot_leads: true,
+      morning_briefing: true,
+      pre_visit_sheet: true,
+      priority_support: false,
     },
   },
   agence: {
     id: 'agence',
     name: 'Agence',
     price: 149,
-    description: 'Pour les équipes avec analytics avancés',
+    description: 'Pour les équipes et agences en pleine croissance',
     limits: {
       leads_per_month: Infinity,
       agents: Infinity,
-      whatsapp: true,
       sms: true,
       multi_agents: true,
       advanced_analytics: true,
       pdf_reports: true,
-      unlimited_templates: true,
+      hot_leads: true,
+      morning_briefing: true,
+      pre_visit_sheet: true,
+      priority_support: true,
     },
   },
 }

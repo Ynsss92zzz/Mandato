@@ -28,10 +28,19 @@ export async function GET(request: NextRequest) {
     }
   )
 
+  const cookieOpts = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 30, // 30 days — OAuth logins are implicitly "remembered"
+  }
+
   // PKCE flow — OAuth, magic link via code exchange
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      cookieStore.set('mandato_rm', '1', cookieOpts)
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
@@ -40,6 +49,10 @@ export async function GET(request: NextRequest) {
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
     if (!error) {
+      // Only set for non-email-change flows (we don't want to change login persistence on email updates)
+      if (type !== 'email_change') {
+        cookieStore.set('mandato_rm', '1', cookieOpts)
+      }
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
