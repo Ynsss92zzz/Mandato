@@ -40,12 +40,18 @@ export async function GET(request: NextRequest) {
   }
 
   if (!enrollments || enrollments.length === 0) {
+    console.log('[sequences cron] no enrollments due at', now)
     return NextResponse.json({ ok: true, processed: 0, timestamp: now })
   }
 
+  console.log(`[sequences cron] ${enrollments.length} enrollment(s) due`)
+
   let processed = 0
+  let skipped = 0
+  let failed = 0
 
   for (const enrollment of enrollments) {
+    const ctx = `enrollment=${enrollment.id} sequence=${enrollment.sequence_id} lead=${enrollment.lead_id} step=${enrollment.current_step + 1}`
     try {
       const lead = enrollment.leads as unknown as {
         first_name: string
@@ -54,20 +60,26 @@ export async function GET(request: NextRequest) {
         phone: string | null
       } | null
 
-      if (!lead) continue
+      if (!lead) {
+        console.error(`[sequences cron] ${ctx} — lead data missing (join failed)`)
+        skipped++
+        continue
+      }
+
+      console.log(`[sequences cron] ${ctx} | lead="${lead.first_name} ${lead.last_name ?? ''}" email=${lead.email ?? 'null'} phone=${lead.phone ?? 'null'}`)
 
       const nextStepOrder = enrollment.current_step + 1
 
       // Fetch the step to execute
-      const { data: step } = await supabase
+      const { data: step, error: stepErr } = await supabase
         .from('sequence_steps')
         .select('step_order, channel, subject, content_template, delay_hours')
         .eq('sequence_id', enrollment.sequence_id)
         .eq('step_order', nextStepOrder)
         .single()
 
-      if (!step) {
-        // No step found — sequence already complete
+      if (stepErr || !step) {
+        console.log(`[sequences cron] ${ctx} — no step ${nextStepOrder} found (${stepErr?.code ?? 'PGRST116'}), marking termine`)
         await supabase
           .from('sequence_enrollments')
           .update({ status: 'termine', completed_at: new Date().toISOString() })
@@ -75,6 +87,8 @@ export async function GET(request: NextRequest) {
         processed++
         continue
       }
+
+      console.log(`[sequences cron] ${ctx} | channel=${step.channel} subject="${step.subject ?? ''}" delay=${step.delay_hours}h`)
 
       // Personalize template variables
       const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
@@ -85,7 +99,7 @@ export async function GET(request: NextRequest) {
 
       const sentAt = new Date().toISOString()
 
-      // Find or create a conversation for this lead+channel (required by messages table)
+      // Find or create conversation
       const { data: existingConv } = await supabase
         .from('conversations')
         .select('id')
@@ -107,42 +121,69 @@ export async function GET(request: NextRequest) {
           .select('id')
           .single()
         if (convErr || !newConv) {
-          console.error('[sequences cron] conversation create error', convErr)
+          console.error(`[sequences cron] ${ctx} — conversation create error: ${convErr?.message}`)
+          failed++
           continue
         }
         conversationId = newConv.id
       }
 
-      // Send the message via the appropriate channel
+      // Send via appropriate channel
       let messageSent = false
+      let sendSkipReason: string | null = null
+
       try {
-        if (step.channel === 'email' && lead.email) {
-          await sendEmail({
-            to: lead.email,
-            subject: step.subject ?? 'Message de votre conseiller immobilier',
-            text: content,
-          })
-          messageSent = true
-        } else if (step.channel === 'sms' && lead.phone) {
-          await sendSMS({ to: lead.phone, body: content })
-          messageSent = true
-        } else if (step.channel === 'whatsapp' && lead.phone) {
-          await sendWhatsApp({ to: lead.phone, body: content })
-          messageSent = true
+        if (step.channel === 'email') {
+          if (!lead.email) {
+            sendSkipReason = 'lead has no email address'
+          } else {
+            console.log(`[sequences cron] ${ctx} — calling sendEmail → ${lead.email}`)
+            await sendEmail({
+              to: lead.email,
+              subject: step.subject ?? 'Message de votre conseiller immobilier',
+              text: content,
+            })
+            console.log(`[sequences cron] ${ctx} — sendEmail OK`)
+            messageSent = true
+          }
+        } else if (step.channel === 'sms') {
+          if (!lead.phone) {
+            sendSkipReason = 'lead has no phone number'
+          } else {
+            console.log(`[sequences cron] ${ctx} — calling sendSMS → ${lead.phone}`)
+            await sendSMS({ to: lead.phone, body: content })
+            console.log(`[sequences cron] ${ctx} — sendSMS OK`)
+            messageSent = true
+          }
+        } else if (step.channel === 'whatsapp') {
+          if (!lead.phone) {
+            sendSkipReason = 'lead has no phone number'
+          } else {
+            console.log(`[sequences cron] ${ctx} — calling sendWhatsApp → ${lead.phone}`)
+            await sendWhatsApp({ to: lead.phone, body: content })
+            console.log(`[sequences cron] ${ctx} — sendWhatsApp OK`)
+            messageSent = true
+          }
         } else if (step.channel === 'note') {
           messageSent = true
         }
       } catch (sendErr) {
-        console.error('[sequences cron] send error', {
-          enrollmentId: enrollment.id,
-          channel: step.channel,
-          err: sendErr,
-        })
+        const msg = sendErr instanceof Error ? sendErr.message : JSON.stringify(sendErr)
+        console.error(`[sequences cron] ${ctx} — ${step.channel} send FAILED: ${msg}`)
+        failed++
+        // Don't advance enrollment when send fails so it retries next cron run
+        continue
       }
 
-      // Record in messages table so it appears in the lead timeline
+      if (sendSkipReason) {
+        console.warn(`[sequences cron] ${ctx} — skipped send: ${sendSkipReason}`)
+        skipped++
+        // Still advance so we don't retry a step that can never send
+      }
+
+      // Record message in DB for timeline
       if (messageSent) {
-        await supabase.from('messages').insert({
+        const { error: msgErr } = await supabase.from('messages').insert({
           agency_id: enrollment.agency_id,
           lead_id: enrollment.lead_id,
           conversation_id: conversationId,
@@ -155,13 +196,13 @@ export async function GET(request: NextRequest) {
           status: 'sent',
           sent_at: sentAt,
         })
-
-        if (conversationId) {
-          await supabase
-            .from('conversations')
-            .update({ last_message_at: sentAt })
-            .eq('id', conversationId)
+        if (msgErr) {
+          console.error(`[sequences cron] ${ctx} — messages insert error: ${msgErr.message}`)
         }
+        await supabase
+          .from('conversations')
+          .update({ last_message_at: sentAt })
+          .eq('id', conversationId)
       }
 
       // Advance enrollment to next step or mark complete
@@ -180,6 +221,7 @@ export async function GET(request: NextRequest) {
           .from('sequence_enrollments')
           .update({ current_step: nextStepOrder, next_step_at: nextAt })
           .eq('id', enrollment.id)
+        console.log(`[sequences cron] ${ctx} — advanced to step ${nextStepOrder + 1}, next_step_at=${nextAt}`)
       } else {
         await supabase
           .from('sequence_enrollments')
@@ -189,13 +231,17 @@ export async function GET(request: NextRequest) {
             completed_at: new Date().toISOString(),
           })
           .eq('id', enrollment.id)
+        console.log(`[sequences cron] ${ctx} — no more steps, marked termine`)
       }
 
       processed++
     } catch (err) {
-      console.error('[sequences cron] enrollment error', { id: enrollment.id, err })
+      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      console.error(`[sequences cron] ${ctx} — unexpected error: ${msg}`)
+      failed++
     }
   }
 
-  return NextResponse.json({ ok: true, processed, timestamp: now })
+  console.log(`[sequences cron] done — processed=${processed} skipped=${skipped} failed=${failed}`)
+  return NextResponse.json({ ok: true, processed, skipped, failed, timestamp: now })
 }
