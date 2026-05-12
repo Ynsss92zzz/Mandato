@@ -68,22 +68,44 @@ export async function sendMessage({
       .eq('id', leadId)
       .single()
 
+    console.log(`[sendMessage] channel=${channel} | lead email=${lead?.email ?? 'null'} | phone=${lead?.phone ?? 'null'}`)
+
     if (lead) {
       try {
-        if (channel === 'email' && lead.email) {
-          await sendEmail({
-            to: lead.email,
-            subject: subject ?? 'Message de votre conseiller immobilier',
-            text: content,
-          })
-        } else if (channel === 'sms' && lead.phone) {
-          await sendSMS({ to: lead.phone, body: content })
-        } else if (channel === 'whatsapp' && lead.phone) {
-          await sendWhatsApp({ to: lead.phone, body: content })
+        if (channel === 'email') {
+          if (lead.email) {
+            console.log('[sendMessage] calling sendEmail →', lead.email)
+            await sendEmail({
+              to: lead.email,
+              subject: subject ?? 'Message de votre conseiller immobilier',
+              text: content,
+            })
+            console.log('[sendMessage] sendEmail done')
+          } else {
+            console.warn('[sendMessage] email channel but lead has no email')
+          }
+        } else if (channel === 'sms') {
+          if (lead.phone) {
+            console.log('[sendMessage] calling sendSMS →', lead.phone)
+            await sendSMS({ to: lead.phone, body: content })
+            console.log('[sendMessage] sendSMS done')
+          } else {
+            console.warn('[sendMessage] sms channel but lead has no phone')
+          }
+        } else if (channel === 'whatsapp') {
+          if (lead.phone) {
+            console.log('[sendMessage] calling sendWhatsApp →', lead.phone)
+            await sendWhatsApp({ to: lead.phone, body: content })
+            console.log('[sendMessage] sendWhatsApp done')
+          } else {
+            console.warn('[sendMessage] whatsapp channel but lead has no phone')
+          }
         }
       } catch (err) {
-        console.error(`[sendMessage] channel=${channel} error:`, err)
+        console.error(`[sendMessage] channel=${channel} threw:`, err instanceof Error ? err.message : JSON.stringify(err))
       }
+    } else {
+      console.warn('[sendMessage] lead not found for id:', leadId)
     }
   }
 

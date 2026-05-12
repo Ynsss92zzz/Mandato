@@ -1,6 +1,9 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const apiKey = process.env.RESEND_API_KEY
+console.log('[resend] init — key:', apiKey ? `${apiKey.slice(0, 8)}…` : '(undefined)')
+
+const resend = new Resend(apiKey)
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@mandato.fr'
 
 export async function sendEmail({
@@ -8,13 +11,20 @@ export async function sendEmail({
 }: {
   to: string; subject: string; text: string; html?: string
 }) {
-  return resend.emails.send({
+  console.log('[resend] sendEmail — to:', to, '| from:', FROM, '| subject:', subject)
+  const result = await resend.emails.send({
     from: FROM,
     to,
     subject,
     html: html ?? `<div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">${text.replace(/\n/g, '<br>')}</div>`,
     text,
   })
+  if (result.error) {
+    console.error('[resend] sendEmail error:', JSON.stringify(result.error))
+  } else {
+    console.log('[resend] sendEmail ok — id:', result.data?.id)
+  }
+  return result
 }
 
 // ─── Booking emails ──────────────────────────────────────────────────────────
