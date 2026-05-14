@@ -7,17 +7,22 @@ const resend = new Resend(apiKey)
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@mandato.fr'
 
 export async function sendEmail({
-  to, subject, text, html,
+  to, subject, text, html, attachments,
 }: {
-  to: string; subject: string; text: string; html?: string
+  to: string
+  subject: string
+  text: string
+  html?: string
+  attachments?: { filename: string; content: Buffer | string }[]
 }) {
-  console.log('[resend] sendEmail — to:', to, '| from:', FROM, '| subject:', subject)
+  console.log('[resend] sendEmail — to:', to, '| from:', FROM, '| subject:', subject, '| attachments:', attachments?.length ?? 0)
   const result = await resend.emails.send({
     from: FROM,
     to,
     subject,
     html: html ?? `<div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">${text.replace(/\n/g, '<br>')}</div>`,
     text,
+    ...(attachments?.length ? { attachments: attachments.map(a => ({ filename: a.filename, content: a.content })) } : {}),
   })
   if (result.error) {
     const msg = (result.error as { message?: string }).message ?? JSON.stringify(result.error)

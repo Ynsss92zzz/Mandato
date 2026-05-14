@@ -14,6 +14,7 @@ import {
   Settings,
   ChevronRight,
   Clock,
+  BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +25,7 @@ const navMain = [
   { href: '/appointments', icon: Calendar, label: 'Rendez-vous' },
   { href: '/sequences', icon: Zap, label: 'Séquences' },
   { href: '/sequences/templates', icon: FileText, label: 'Templates' },
+  { href: '/weekly-reports', icon: BookOpen, label: 'Résumés hebdo' },
 ]
 
 const navAgence = [

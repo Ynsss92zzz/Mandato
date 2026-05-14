@@ -149,7 +149,7 @@ export default async function DashboardPage() {
       {isStarter && (
         <div className="rounded-2xl bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] px-5 py-4 flex items-center justify-between gap-4 shadow-sm">
           <p className="text-sm font-semibold text-white leading-snug">
-            🚀 Passez au plan Pro et obtenez des relances illimitées + WhatsApp + SMS
+            🚀 Passez au plan Pro — 80 leads/mois, SMS, leads chauds IA et analytics avancés
           </p>
           <Link
             href="/settings/billing"
