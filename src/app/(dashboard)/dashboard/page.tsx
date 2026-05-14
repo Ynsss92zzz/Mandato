@@ -235,7 +235,7 @@ export default async function DashboardPage() {
         <MetricCard
           label="Leads ce mois"
           value={leadsThisMonth ?? 0}
-          subtext={isStarter ? `sur 50 (plan Starter)` : 'illimités (plan Pro/Agence)'}
+          subtext={isStarter ? `sur 30 (plan Starter)` : 'illimités (plan Pro/Agence)'}
           icon={<TrendingUp className="w-4 h-4" />}
         />
         <MetricCard

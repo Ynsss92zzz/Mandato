@@ -14,12 +14,14 @@ export async function createStripeCustomer(email: string, agencyId: string) {
 export async function createCheckoutSession({
   customerId,
   priceId,
+  planId,
   agencyId,
   successUrl,
   cancelUrl,
 }: {
   customerId: string
   priceId: string
+  planId: string
   agencyId: string
   successUrl: string
   cancelUrl: string
@@ -31,10 +33,10 @@ export async function createCheckoutSession({
     mode: 'subscription',
     success_url: successUrl,
     cancel_url: cancelUrl,
-    metadata: { agency_id: agencyId },
+    metadata: { agency_id: agencyId, plan_id: planId },
     subscription_data: {
       trial_period_days: 14,
-      metadata: { agency_id: agencyId },
+      metadata: { agency_id: agencyId, plan_id: planId },
     },
   })
 }

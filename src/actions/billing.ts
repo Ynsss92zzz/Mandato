@@ -71,6 +71,7 @@ export async function startCheckout(planId: string): Promise<{ error: string } |
     const session = await createCheckoutSession({
       customerId,
       priceId,
+      planId,
       agencyId: data.agencyId,
       successUrl: `${APP_URL}/settings/billing?success=1`,
       cancelUrl:  `${APP_URL}/settings/billing?canceled=1`,
