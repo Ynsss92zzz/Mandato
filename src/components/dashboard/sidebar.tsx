@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
@@ -50,10 +51,12 @@ export function Sidebar({ agencyName, plan }: SidebarProps) {
       {/* Logo */}
       <div className="px-4 py-4 mb-1">
         <Link href="/dashboard" className="flex items-center gap-2.5">
-          <img
+          <Image
             src="/logo.png"
             alt="Mandato"
-            className="w-7 h-7 rounded-md object-contain flex-shrink-0"
+            width={28}
+            height={28}
+            className="rounded-md object-contain flex-shrink-0"
           />
           <span className="text-white font-semibold text-[15px] tracking-tight">Mandato</span>
         </Link>
