@@ -10,6 +10,7 @@ interface LeadInput {
   message?: string | null
   source?: string | null
   budget?: number | null
+  project_type?: string | null
 }
 
 interface LeadAnalysis {
@@ -22,6 +23,10 @@ interface LeadAnalysis {
 }
 
 export async function qualifyLead(lead: LeadInput): Promise<LeadAnalysis> {
+  const projectTypeLabel = lead.project_type
+    ? { achat: 'Achat', vente: 'Vente', location: 'Location' }[lead.project_type] ?? lead.project_type
+    : 'Non renseigné'
+
   const prompt = `Tu es un expert en qualification de leads immobiliers français. Analyse ce prospect et retourne un JSON strict.
 
 Prospect :
@@ -31,6 +36,9 @@ Prospect :
 - Message : ${lead.message ?? 'Aucun message'}
 - Source : ${lead.source ?? 'Inconnue'}
 - Budget déclaré : ${lead.budget ? lead.budget + '€' : 'Non renseigné'}
+- Type de projet : ${projectTypeLabel}
+
+Le type de projet déclaré doit guider l'intention. Si "Achat" → intention "achat", si "Vente" → intention "vente", si "Location" → intention "location". En cas de contradiction avec le message, priorise le type de projet déclaré.
 
 Retourne UNIQUEMENT ce JSON (sans markdown, sans explication) :
 {

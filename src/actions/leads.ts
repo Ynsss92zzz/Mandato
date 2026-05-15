@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { qualifyLead } from '@/lib/ai/qualify-lead'
 import { autoEnrollNewLead } from '@/lib/sequences/auto-enroll'
+import type { Database } from '@/types/database'
 import type { LeadStatus, LeadSource } from '@/types'
 
 async function getAgencyId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
@@ -26,22 +27,28 @@ export async function createLead(formData: FormData) {
   const budgetRaw = formData.get('budget') as string | null
   const budget = budgetRaw ? parseInt(budgetRaw, 10) || null : null
 
+  const insertPayload = {
+    agency_id: agencyId,
+    first_name: formData.get('first_name') as string,
+    last_name: (formData.get('last_name') as string | null) || null,
+    email: (formData.get('email') as string | null) || null,
+    phone: (formData.get('phone') as string | null) || null,
+    message: (formData.get('message') as string | null) || null,
+    source: ((formData.get('source') as LeadSource | null) ?? 'manuel'),
+    budget,
+    property_type: (formData.get('property_type') as string | null) || null,
+    location_desired: (formData.get('location_desired') as string | null) || null,
+    status: 'nouveau' as const,
+    tags: [] as string[],
+  }
+  // project_type not yet in generated types — added via Object.assign
+  Object.assign(insertPayload, {
+    project_type: (formData.get('project_type') as string | null) || null,
+  })
+
   const { data, error } = await supabase
     .from('leads')
-    .insert({
-      agency_id: agencyId,
-      first_name: formData.get('first_name') as string,
-      last_name: (formData.get('last_name') as string | null) || null,
-      email: (formData.get('email') as string | null) || null,
-      phone: (formData.get('phone') as string | null) || null,
-      message: (formData.get('message') as string | null) || null,
-      source: ((formData.get('source') as LeadSource | null) ?? 'manuel'),
-      budget,
-      property_type: (formData.get('property_type') as string | null) || null,
-      location_desired: (formData.get('location_desired') as string | null) || null,
-      status: 'nouveau',
-      tags: [],
-    })
+    .insert(insertPayload as unknown as Database['public']['Tables']['leads']['Insert'])
     .select()
     .single()
 
@@ -70,21 +77,26 @@ export async function updateLead(leadId: string, formData: FormData) {
   const statusRaw = formData.get('status') as LeadStatus | null
   const sourceRaw = formData.get('source') as LeadSource | null
 
+  const updatePayload = {
+    first_name: formData.get('first_name') as string,
+    last_name: (formData.get('last_name') as string | null) || null,
+    email: (formData.get('email') as string | null) || null,
+    phone: (formData.get('phone') as string | null) || null,
+    message: (formData.get('message') as string | null) || null,
+    notes: (formData.get('notes') as string | null) || null,
+    source: sourceRaw ?? undefined,
+    status: statusRaw ?? undefined,
+    budget,
+    property_type: (formData.get('property_type') as string | null) || null,
+    location_desired: (formData.get('location_desired') as string | null) || null,
+  }
+  Object.assign(updatePayload, {
+    project_type: (formData.get('project_type') as string | null) || null,
+  })
+
   const { error } = await supabase
     .from('leads')
-    .update({
-      first_name: formData.get('first_name') as string,
-      last_name: (formData.get('last_name') as string | null) || null,
-      email: (formData.get('email') as string | null) || null,
-      phone: (formData.get('phone') as string | null) || null,
-      message: (formData.get('message') as string | null) || null,
-      notes: (formData.get('notes') as string | null) || null,
-      source: sourceRaw ?? undefined,
-      status: statusRaw ?? undefined,
-      budget,
-      property_type: (formData.get('property_type') as string | null) || null,
-      location_desired: (formData.get('location_desired') as string | null) || null,
-    })
+    .update(updatePayload as unknown as Database['public']['Tables']['leads']['Update'])
     .eq('id', leadId)
     .eq('agency_id', agencyId)
 
@@ -230,6 +242,7 @@ export async function qualifyLeadWithAI(leadId: string) {
       message: lead.message,
       source: lead.source,
       budget: lead.budget,
+      project_type: (lead as unknown as { project_type?: string | null }).project_type,
     })
   } catch {
     return { error: 'Erreur IA — vérifiez la clé OpenAI' }

@@ -2,6 +2,8 @@ import type { PlanId } from '@/constants/plans'
 
 export type LeadStatus = 'nouveau' | 'contacte' | 'qualifie' | 'rdv_planifie' | 'proposition' | 'gagne' | 'perdu'
 
+export type ProjectType = 'achat' | 'vente' | 'location'
+
 export type LeadSource = 'widget' | 'manuel' | 'seloger' | 'leboncoin' | 'logicimmo' | 'import' | 'autre'
 
 export type MessageChannel = 'email' | 'sms' | 'whatsapp' | 'note'

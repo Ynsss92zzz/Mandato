@@ -6,10 +6,11 @@ import { LeadList } from './lead-list'
 import { LeadForm } from './lead-form'
 import { useRouter } from 'next/navigation'
 import type { Database } from '@/types/database'
+import type { ProjectType } from '@/types'
 import { importLeads } from '@/actions/leads'
 import { Upload, Download, CheckCircle, AlertCircle, X } from 'lucide-react'
 
-type Lead = Database['public']['Tables']['leads']['Row']
+type Lead = Database['public']['Tables']['leads']['Row'] & { project_type?: ProjectType | null }
 type View = 'kanban' | 'list'
 type ImportResult = { count: number } | { error: string } | null
 
@@ -58,11 +59,16 @@ export function LeadsView({ leads, plan = 'starter' }: { leads: Lead[]; plan?: '
   const isAgence = plan === 'agence'
   const showHot = plan === 'pro' || plan === 'agence'
   const [view, setView] = useState<View>('kanban')
+  const [projectTypeFilter, setProjectTypeFilter] = useState<ProjectType | null>(null)
   const [formState, setFormState] = useState<{ open: boolean; lead?: Lead }>({ open: false })
   const [importResult, setImportResult] = useState<ImportResult>(null)
   const [importing, startImport] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+
+  const filteredLeads = projectTypeFilter
+    ? leads.filter(l => l.project_type === projectTypeFilter)
+    : leads
 
   function openCreate() { setFormState({ open: true, lead: undefined }) }
   function openEdit(lead: Lead) { setFormState({ open: true, lead }) }
@@ -202,11 +208,39 @@ export function LeadsView({ leads, plan = 'starter' }: { leads: Lead[]; plan?: '
         </div>
       )}
 
+      {/* Project type filter */}
+      <div className="flex items-center gap-2 mb-4">
+        {([null, 'achat', 'vente', 'location'] as const).map((type) => {
+          const label = type === null ? 'Tous' : { achat: 'Achat', vente: 'Vente', location: 'Location' }[type]
+          const active = projectTypeFilter === type
+          const colorActive = type === 'achat' ? 'bg-blue-600 border-blue-600 text-white' :
+            type === 'vente' ? 'bg-orange-500 border-orange-500 text-white' :
+            type === 'location' ? 'bg-green-600 border-green-600 text-white' :
+            'bg-[#1B2B4B] border-[#1B2B4B] text-white'
+          return (
+            <button
+              key={String(type)}
+              onClick={() => setProjectTypeFilter(type)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                active ? colorActive : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 bg-white'
+              }`}
+            >
+              {label}
+              {type !== null && (
+                <span className="ml-1.5 opacity-70">
+                  {leads.filter(l => l.project_type === type).length}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
       {/* Main content */}
       {view === 'kanban' ? (
-        <LeadKanban initialLeads={leads} onEdit={openEdit} showHot={showHot} />
+        <LeadKanban initialLeads={filteredLeads} onEdit={openEdit} showHot={showHot} />
       ) : (
-        <LeadList leads={leads} onEdit={openEdit} showHot={showHot} />
+        <LeadList leads={filteredLeads} onEdit={openEdit} showHot={showHot} />
       )}
 
       {formState.open && (

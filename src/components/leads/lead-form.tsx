@@ -3,9 +3,9 @@
 import { useState, useTransition } from 'react'
 import { createLead, updateLead } from '@/actions/leads'
 import type { Database } from '@/types/database'
-import type { LeadStatus, LeadSource } from '@/types'
+import type { LeadStatus, LeadSource, ProjectType } from '@/types'
 
-type Lead = Database['public']['Tables']['leads']['Row']
+type Lead = Database['public']['Tables']['leads']['Row'] & { project_type?: ProjectType | null }
 
 const SOURCES: { value: LeadSource; label: string }[] = [
   { value: 'manuel', label: 'Manuel' },
@@ -143,6 +143,30 @@ export function LeadForm({ lead, onSuccess, onClose }: LeadFormProps) {
                 </select>
               </div>
             )}
+          </div>
+
+          {/* Type de projet */}
+          <div>
+            <label className={labelCls}>Type de projet</label>
+            <div className="flex gap-2">
+              {(['achat', 'vente', 'location'] as const).map((type) => {
+                const labels = { achat: 'Achat', vente: 'Vente', location: 'Location' }
+                return (
+                  <label key={type} className="flex-1 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="project_type"
+                      value={type}
+                      defaultChecked={lead?.project_type === type}
+                      className="sr-only peer"
+                    />
+                    <span className="flex items-center justify-center py-2 text-sm font-medium rounded-lg border border-zinc-200 text-zinc-500 peer-checked:border-[#1B2B4B] peer-checked:bg-[#1B2B4B] peer-checked:text-white transition-colors">
+                      {labels[type]}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
           </div>
 
           {/* Projet */}

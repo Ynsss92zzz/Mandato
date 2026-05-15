@@ -2,9 +2,15 @@
 
 import { useRouter } from 'next/navigation'
 import type { Database } from '@/types/database'
-import type { LeadStatus, LeadSource } from '@/types'
+import type { LeadStatus, LeadSource, ProjectType } from '@/types'
 
-type Lead = Database['public']['Tables']['leads']['Row']
+type Lead = Database['public']['Tables']['leads']['Row'] & { project_type?: ProjectType | null }
+
+const PROJECT_TYPE_CONFIG: Record<ProjectType, { label: string; color: string }> = {
+  achat:    { label: 'Achat',    color: 'bg-blue-100 text-blue-700' },
+  vente:    { label: 'Vente',    color: 'bg-orange-100 text-orange-700' },
+  location: { label: 'Location', color: 'bg-green-100 text-green-700' },
+}
 
 const STATUS_CONFIG: Record<LeadStatus, { label: string; color: string }> = {
   nouveau: { label: 'Nouveau', color: 'bg-blue-100 text-blue-700' },
@@ -73,6 +79,7 @@ export function LeadList({
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50/50">
               <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Lead</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Projet</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Contact</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Statut</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Source</th>
@@ -111,6 +118,15 @@ export function LeadList({
                         )}
                       </div>
                     </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {lead.project_type ? (
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PROJECT_TYPE_CONFIG[lead.project_type].color}`}>
+                        {PROJECT_TYPE_CONFIG[lead.project_type].label}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-300 text-sm">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="text-xs space-y-0.5">

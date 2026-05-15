@@ -29,6 +29,12 @@
 
   "headers": [
     {
+      "source": "/api/(.*)/webhooks(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
       "source": "/api/webhooks/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }

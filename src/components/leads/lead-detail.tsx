@@ -10,9 +10,9 @@ import {
 } from '@/actions/leads'
 import { LeadForm } from './lead-form'
 import type { Database } from '@/types/database'
-import type { LeadStatus, LeadSource, LeadAIAnalysis, MessageChannel } from '@/types'
+import type { LeadStatus, LeadSource, LeadAIAnalysis, MessageChannel, ProjectType } from '@/types'
 
-type Lead = Database['public']['Tables']['leads']['Row']
+type Lead = Database['public']['Tables']['leads']['Row'] & { project_type?: ProjectType | null }
 
 const STATUS_OPTIONS: { value: LeadStatus; label: string }[] = [
   { value: 'nouveau', label: 'Nouveau' },
@@ -250,6 +250,18 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
               } />
               <InfoRow label="Type de bien" value={lead.property_type} />
               <InfoRow label="Localisation souhaitée" value={lead.location_desired} />
+              {lead.project_type && (
+                <div>
+                  <p className="text-xs text-zinc-400 mb-0.5">Type de projet</p>
+                  <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    lead.project_type === 'achat' ? 'bg-blue-100 text-blue-700' :
+                    lead.project_type === 'vente' ? 'bg-orange-100 text-orange-700' :
+                    'bg-green-100 text-green-700'
+                  }`}>
+                    {{ achat: 'Achat', vente: 'Vente', location: 'Location' }[lead.project_type]}
+                  </span>
+                </div>
+              )}
             </div>
             {lead.message && (
               <div className="mt-4 pt-4 border-t border-zinc-100">
