@@ -57,7 +57,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const userEmail = user.email ?? ''
 
   return (
-    <div className="flex h-screen bg-[#f0f3f9] overflow-hidden print:block print:h-auto print:overflow-visible print:bg-white">
+    <div className="flex h-screen bg-[#f8fafc] overflow-hidden print:block print:h-auto print:overflow-visible print:bg-white">
       <div className="print:hidden">
         <Sidebar agencyName={agencyName} plan={plan} />
       </div>
