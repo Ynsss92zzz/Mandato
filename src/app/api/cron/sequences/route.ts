@@ -15,25 +15,25 @@ export async function GET(request: NextRequest) {
   }
   const auth = request.headers.get('authorization')
   if (auth !== `Bearer ${cronSecret}`) {
-    console.error('[sequences cron] Authorization mismatch — expected Bearer <CRON_SECRET>, received:', auth?.slice(0, 15) ?? '(none)')
+    console.error('[sequences cron] Authorization mismatch — received:', auth?.slice(0, 20) ?? '(none)')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Log env var presence so we can confirm config in Vercel logs
-  console.log('[sequences cron] env check — RESEND_API_KEY:', process.env.RESEND_API_KEY ? `set (${process.env.RESEND_API_KEY.slice(0, 8)}…)` : 'MISSING')
-  console.log('[sequences cron] env check — RESEND_FROM_EMAIL:', process.env.RESEND_FROM_EMAIL ?? '(using default noreply@mandato.fr)')
-  console.log('[sequences cron] env check — TWILIO_ACCOUNT_SID:', process.env.TWILIO_ACCOUNT_SID ? `set (${process.env.TWILIO_ACCOUNT_SID.slice(0, 8)}…)` : 'MISSING')
-  console.log('[sequences cron] env check — TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ?? 'MISSING')
-  console.log('[sequences cron] env check — TWILIO_WHATSAPP_NUMBER:', process.env.TWILIO_WHATSAPP_NUMBER ?? 'MISSING')
+  console.log('[sequences cron] ═══ START ═══')
+  console.log('[sequences cron] env — RESEND_API_KEY:', process.env.RESEND_API_KEY ? `set (${process.env.RESEND_API_KEY.slice(0, 8)}…)` : '⚠ MISSING')
+  console.log('[sequences cron] env — RESEND_FROM_EMAIL:', process.env.RESEND_FROM_EMAIL ?? '(default noreply@mandato.fr)')
+  console.log('[sequences cron] env — TWILIO_ACCOUNT_SID:', process.env.TWILIO_ACCOUNT_SID ? `set (${process.env.TWILIO_ACCOUNT_SID.slice(0, 8)}…)` : '⚠ MISSING')
+  console.log('[sequences cron] env — TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ?? '⚠ MISSING')
 
   const supabase = createAdminClient()
   const now = new Date().toISOString()
+  console.log('[sequences cron] now =', now)
 
   // Fetch enrollments whose next step is due
   const { data: enrollments, error } = await supabase
     .from('sequence_enrollments')
     .select(`
-      id, lead_id, sequence_id, agency_id, current_step,
+      id, lead_id, sequence_id, agency_id, current_step, next_step_at,
       leads ( first_name, last_name, email, phone ),
       sequences ( name )
     `)
@@ -42,24 +42,37 @@ export async function GET(request: NextRequest) {
     .limit(100)
 
   if (error) {
-    console.error('[sequences cron] fetch error', error)
+    console.error('[sequences cron] ⚠ fetch error — code:', error.code, '| message:', error.message)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  console.log('[sequences cron] fetch returned', enrollments?.length ?? 0, 'enrollment(s)')
+
+  // Dump first enrollment raw so we can verify the join structure
+  if (enrollments && enrollments.length > 0) {
+    console.log('[sequences cron] first enrollment (raw):', JSON.stringify(enrollments[0]))
+  }
+
   if (!enrollments || enrollments.length === 0) {
-    console.log('[sequences cron] no enrollments due at', now)
+    console.log('[sequences cron] no enrollments due — checking total actif count...')
+    const { count } = await supabase
+      .from('sequence_enrollments')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'actif')
+    console.log('[sequences cron] total actif enrollments in DB (any next_step_at):', count)
+    console.log('[sequences cron] ═══ END (nothing to do) ═══')
     return NextResponse.json({ ok: true, processed: 0, timestamp: now })
   }
 
-  console.log(`[sequences cron] ${enrollments.length} enrollment(s) due`)
-
   // Build agencyId → "Name <local@withmandato.com>" map for email From header
   const agencyIds = [...new Set(enrollments.map(e => e.agency_id))]
-  const { data: ownerMembers } = await supabase
+  const { data: ownerMembers, error: ownerErr } = await supabase
     .from('agency_members')
     .select('agency_id, profiles(full_name)')
     .in('agency_id', agencyIds)
     .eq('role', 'owner')
+
+  if (ownerErr) console.error('[sequences cron] owner fetch error:', ownerErr.message)
 
   const agencyFromMap = new Map<string, string>()
   for (const m of (ownerMembers ?? [])) {
@@ -73,8 +86,10 @@ export async function GET(request: NextRequest) {
   let failed = 0
 
   for (const enrollment of enrollments) {
-    const ctx = `enrollment=${enrollment.id} sequence=${enrollment.sequence_id} lead=${enrollment.lead_id} step=${enrollment.current_step + 1}`
+    const ctx = `[enr=${enrollment.id.slice(0, 8)} seq=${enrollment.sequence_id.slice(0, 8)} lead=${enrollment.lead_id.slice(0, 8)}]`
     try {
+      console.log(`${ctx} ── processing step=${enrollment.current_step + 1} next_step_at=${enrollment.next_step_at}`)
+
       const lead = enrollment.leads as unknown as {
         first_name: string
         last_name: string | null
@@ -83,12 +98,14 @@ export async function GET(request: NextRequest) {
       } | null
 
       if (!lead) {
-        console.error(`[sequences cron] ${ctx} — lead data missing (join failed)`)
+        // The leads join failed — likely missing FK constraint in DB
+        console.error(`${ctx} ⚠ leads join returned null — check FK sequence_enrollments.lead_id → leads.id in DB`)
+        console.error(`${ctx} raw enrollment.leads =`, JSON.stringify((enrollment as Record<string, unknown>).leads))
         skipped++
         continue
       }
 
-      console.log(`[sequences cron] ${ctx} | lead="${lead.first_name} ${lead.last_name ?? ''}" email=${lead.email ?? 'null'} phone=${lead.phone ?? 'null'}`)
+      console.log(`${ctx} lead: "${lead.first_name} ${lead.last_name ?? ''}" | email=${lead.email ?? '(none)'} | phone=${lead.phone ?? '(none)'}`)
 
       const nextStepOrder = enrollment.current_step + 1
 
@@ -100,17 +117,24 @@ export async function GET(request: NextRequest) {
         .eq('step_order', nextStepOrder)
         .single()
 
-      if (stepErr || !step) {
-        console.log(`[sequences cron] ${ctx} — no step ${nextStepOrder} found (${stepErr?.code ?? 'PGRST116'}), marking termine`)
-        await supabase
+      if (stepErr) {
+        console.error(`${ctx} ⚠ step fetch error — code:${stepErr.code} msg:${stepErr.message}`)
+      }
+
+      if (!step) {
+        // No step at this order → sequence is done
+        console.log(`${ctx} no step at order=${nextStepOrder} (stepErr code=${stepErr?.code ?? 'none'}) → marking termine`)
+        const { error: termErr } = await supabase
           .from('sequence_enrollments')
           .update({ status: 'termine', completed_at: new Date().toISOString() })
           .eq('id', enrollment.id)
+        if (termErr) console.error(`${ctx} termine update error:`, termErr.message)
         processed++
         continue
       }
 
-      console.log(`[sequences cron] ${ctx} | channel=${step.channel} subject="${step.subject ?? ''}" delay=${step.delay_hours}h`)
+      console.log(`${ctx} step: order=${step.step_order} channel=${step.channel} delay=${step.delay_hours}h subject="${step.subject ?? ''}"`)
+      console.log(`${ctx} content_template (first 120 chars): "${step.content_template?.slice(0, 120) ?? '(empty!)'}"`)
 
       // Personalize template variables
       const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
@@ -132,6 +156,7 @@ export async function GET(request: NextRequest) {
       let conversationId: string
       if (existingConv) {
         conversationId = existingConv.id
+        console.log(`${ctx} using existing conversation ${conversationId}`)
       } else {
         const { data: newConv, error: convErr } = await supabase
           .from('conversations')
@@ -143,11 +168,12 @@ export async function GET(request: NextRequest) {
           .select('id')
           .single()
         if (convErr || !newConv) {
-          console.error(`[sequences cron] ${ctx} — conversation create error: ${convErr?.message}`)
+          console.error(`${ctx} ⚠ conversation create error:`, convErr?.message, convErr?.code)
           failed++
           continue
         }
         conversationId = newConv.id
+        console.log(`${ctx} created conversation ${conversationId}`)
       }
 
       // Send via appropriate channel
@@ -160,52 +186,62 @@ export async function GET(request: NextRequest) {
             sendSkipReason = 'lead has no email address'
           } else {
             const from = agencyFromMap.get(enrollment.agency_id)
-            console.log(`[sequences cron] ${ctx} — calling sendEmail → ${lead.email} | from: ${from ?? '(default)'}`)
+            console.log(`${ctx} → sendEmail to=${lead.email} from=${from ?? '(default)'}`)
             await sendEmail({
               to: lead.email,
               subject: step.subject ?? 'Message de votre conseiller immobilier',
               text: content,
               from,
             })
-            console.log(`[sequences cron] ${ctx} — sendEmail OK`)
+            console.log(`${ctx} ✓ sendEmail OK`)
             messageSent = true
           }
         } else if (step.channel === 'sms') {
           if (!lead.phone) {
             sendSkipReason = 'lead has no phone number'
           } else {
-            console.log(`[sequences cron] ${ctx} — calling sendSMS → ${lead.phone}`)
+            console.log(`${ctx} → sendSMS to=${lead.phone}`)
             await sendSMS({ to: lead.phone, body: content })
-            console.log(`[sequences cron] ${ctx} — sendSMS OK`)
+            console.log(`${ctx} ✓ sendSMS OK`)
             messageSent = true
           }
         } else if (step.channel === 'whatsapp') {
           if (!lead.phone) {
             sendSkipReason = 'lead has no phone number'
           } else {
-            console.log(`[sequences cron] ${ctx} — calling sendWhatsApp → ${lead.phone}`)
+            console.log(`${ctx} → sendWhatsApp to=${lead.phone}`)
             await sendWhatsApp({ to: lead.phone, body: content })
-            console.log(`[sequences cron] ${ctx} — sendWhatsApp OK`)
+            console.log(`${ctx} ✓ sendWhatsApp OK`)
             messageSent = true
           }
         } else if (step.channel === 'note') {
+          console.log(`${ctx} channel=note — no send needed`)
           messageSent = true
+        } else {
+          console.error(`${ctx} ⚠ unknown channel="${step.channel}"`)
+          sendSkipReason = `unknown channel: ${step.channel}`
         }
       } catch (sendErr) {
-        const msg = sendErr instanceof Error ? sendErr.message : JSON.stringify(sendErr)
-        console.error(`[sequences cron] ${ctx} — ${step.channel} send FAILED: ${msg}`)
+        // Log the full error object so Resend/Twilio details are visible
+        const errObj = sendErr as Record<string, unknown>
+        console.error(
+          `${ctx} ⚠ ${step.channel} send FAILED —`,
+          `name: ${errObj?.name ?? '?'}`,
+          `| message: ${errObj?.message ?? '?'}`,
+          `| statusCode: ${errObj?.statusCode ?? errObj?.status ?? '?'}`,
+          `| code: ${errObj?.code ?? '?'}`,
+          `| body: ${JSON.stringify(errObj?.response ?? errObj?.body ?? errObj?.data ?? '(no body)')}`,
+        )
         failed++
-        // Don't advance enrollment when send fails so it retries next cron run
         continue
       }
 
       if (sendSkipReason) {
-        console.warn(`[sequences cron] ${ctx} — skipped send: ${sendSkipReason}`)
+        console.warn(`${ctx} ⚠ send skipped: ${sendSkipReason}`)
         skipped++
-        // Still advance so we don't retry a step that can never send
       }
 
-      // Record message in DB for timeline
+      // Record message in DB
       if (messageSent) {
         const { error: msgErr } = await supabase.from('messages').insert({
           agency_id: enrollment.agency_id,
@@ -221,7 +257,9 @@ export async function GET(request: NextRequest) {
           sent_at: sentAt,
         })
         if (msgErr) {
-          console.error(`[sequences cron] ${ctx} — messages insert error: ${msgErr.message}`)
+          console.error(`${ctx} ⚠ message insert error:`, msgErr.message, msgErr.code)
+        } else {
+          console.log(`${ctx} message recorded in DB`)
         }
         await supabase
           .from('conversations')
@@ -230,42 +268,48 @@ export async function GET(request: NextRequest) {
       }
 
       // Advance enrollment to next step or mark complete
-      const { data: followingStep } = await supabase
+      const { data: followingStep, error: followErr } = await supabase
         .from('sequence_steps')
         .select('delay_hours')
         .eq('sequence_id', enrollment.sequence_id)
         .eq('step_order', nextStepOrder + 1)
         .single()
 
+      if (followErr && followErr.code !== 'PGRST116') {
+        console.error(`${ctx} following step fetch error:`, followErr.message)
+      }
+
       if (followingStep) {
-        const nextAt = new Date(
-          Date.now() + followingStep.delay_hours * 60 * 60 * 1000
-        ).toISOString()
-        await supabase
+        const nextAt = new Date(Date.now() + followingStep.delay_hours * 60 * 60 * 1000).toISOString()
+        const { error: advErr } = await supabase
           .from('sequence_enrollments')
           .update({ current_step: nextStepOrder, next_step_at: nextAt })
           .eq('id', enrollment.id)
-        console.log(`[sequences cron] ${ctx} — advanced to step ${nextStepOrder + 1}, next_step_at=${nextAt}`)
+        if (advErr) {
+          console.error(`${ctx} advance update error:`, advErr.message)
+        } else {
+          console.log(`${ctx} ✓ advanced → step ${nextStepOrder + 1}, next_step_at=${nextAt}`)
+        }
       } else {
-        await supabase
+        const { error: termErr } = await supabase
           .from('sequence_enrollments')
-          .update({
-            current_step: nextStepOrder,
-            status: 'termine',
-            completed_at: new Date().toISOString(),
-          })
+          .update({ current_step: nextStepOrder, status: 'termine', completed_at: new Date().toISOString() })
           .eq('id', enrollment.id)
-        console.log(`[sequences cron] ${ctx} — no more steps, marked termine`)
+        if (termErr) {
+          console.error(`${ctx} termine update error:`, termErr.message)
+        } else {
+          console.log(`${ctx} ✓ sequence complete — marked termine`)
+        }
       }
 
       processed++
     } catch (err) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      console.error(`[sequences cron] ${ctx} — unexpected error: ${msg}`)
+      const errObj = err as Record<string, unknown>
+      console.error(`${ctx} ⚠ unexpected error — message: ${errObj?.message ?? JSON.stringify(err)}`)
       failed++
     }
   }
 
-  console.log(`[sequences cron] done — processed=${processed} skipped=${skipped} failed=${failed}`)
+  console.log(`[sequences cron] ═══ END — processed=${processed} skipped=${skipped} failed=${failed} ═══`)
   return NextResponse.json({ ok: true, processed, skipped, failed, timestamp: now })
 }
