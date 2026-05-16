@@ -5,7 +5,7 @@ import { sendSMS, sendWhatsApp } from '@/lib/twilio'
 
 export const runtime = 'nodejs'
 
-// Vercel Cron — runs daily at 9h UTC (vercel.json)
+// Vercel Cron — runs every hour (vercel.json: "0 * * * *")
 // Processes pending sequence enrollments and sends messages when delay has elapsed
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET?.trim()
