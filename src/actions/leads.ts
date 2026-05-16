@@ -54,10 +54,12 @@ export async function createLead(formData: FormData) {
 
   if (error) return { error: error.message }
 
-  // Trigger sequences with trigger_on='lead_created' — fire-and-forget
-  autoEnrollNewLead(agencyId, data.id).catch((err) =>
-    console.error('[createLead] auto-enroll failed', err)
-  )
+  // Trigger sequences with trigger_on='lead_created'
+  try {
+    await autoEnrollNewLead(agencyId, data.id)
+  } catch (err) {
+    console.error('[createLead] auto-enroll threw:', err)
+  }
 
   revalidatePath('/leads')
   return { lead: data }

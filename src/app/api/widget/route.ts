@@ -32,10 +32,12 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
-    // Trigger sequences with trigger_on='lead_created' — fire-and-forget
-    autoEnrollNewLead(agency_id, data.id).catch((err) =>
-      console.error('[widget] auto-enroll failed', err)
-    )
+    // Trigger sequences with trigger_on='lead_created'
+    try {
+      await autoEnrollNewLead(agency_id, data.id)
+    } catch (err) {
+      console.error('[widget] auto-enroll threw:', err)
+    }
 
     return NextResponse.json({ success: true, lead_id: data.id })
   } catch {
