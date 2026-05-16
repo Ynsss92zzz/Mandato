@@ -4,37 +4,80 @@ const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
 const AUTH_TOKEN  = process.env.TWILIO_AUTH_TOKEN
 const PHONE       = process.env.TWILIO_PHONE_NUMBER
 const WA_PHONE    = process.env.TWILIO_WHATSAPP_NUMBER
+const MSG_SID     = process.env.TWILIO_MESSAGING_SERVICE_SID
 
-console.log('[twilio] init — SID:', ACCOUNT_SID ?? '(undefined)', '| phone:', PHONE ?? '(undefined)', '| wa:', WA_PHONE ?? '(undefined)')
+console.log(
+  '[twilio] init — SID:', ACCOUNT_SID ?? '(undefined)',
+  '| phone:', PHONE ?? '(undefined)',
+  '| wa:', WA_PHONE ?? '(undefined)',
+  '| messagingServiceSid:', MSG_SID ?? '(not set — will use TWILIO_PHONE_NUMBER)',
+)
 
 function getClient() {
   return twilio(ACCOUNT_SID!, AUTH_TOKEN!)
 }
 
+/**
+ * Converts a French phone number to E.164 format (+33XXXXXXXXX).
+ * Handles: 0612345678, 06 12 34 56 78, 0033612345678, +33612345678
+ */
+export function formatE164FR(phone: string): string {
+  const cleaned = phone.replace(/[\s.\-()]/g, '')
+
+  if (cleaned.startsWith('+')) return cleaned
+  if (cleaned.startsWith('0033')) return '+33' + cleaned.slice(4)
+  if (cleaned.startsWith('0') && cleaned.length === 10) return '+33' + cleaned.slice(1)
+  if (/^\d{9}$/.test(cleaned)) return '+33' + cleaned
+
+  // Unrecognized — return as-is and let Twilio surface the error
+  return phone
+}
+
+function logTwilioError(err: unknown, context: string) {
+  const e = err as Record<string, unknown>
+  console.error(
+    `[twilio] ${context} FAILED —`,
+    `code: ${e?.code ?? 'unknown'}`,
+    `| status: ${e?.status ?? 'unknown'}`,
+    `| message: ${e?.message ?? ''}`,
+    `| moreInfo: ${e?.moreInfo ?? ''}`,
+  )
+}
+
 export async function sendSMS({ to, body }: { to: string; body: string }) {
-  console.log('[twilio] sendSMS — to:', to, '| from:', PHONE)
+  const formatted = formatE164FR(to)
+  const sender = MSG_SID
+    ? `messagingServiceSid=${MSG_SID}`
+    : `from=${PHONE ?? '(undefined)'}`
+  console.log('[twilio] sendSMS — to (raw):', to, '→ (E.164):', formatted, '|', sender)
+
   try {
-    const msg = await getClient().messages.create({ from: PHONE!, to, body })
+    const params = MSG_SID
+      ? { to: formatted, body, messagingServiceSid: MSG_SID }
+      : { to: formatted, body, from: PHONE! }
+    const msg = await getClient().messages.create(params)
     console.log('[twilio] sendSMS ok — sid:', msg.sid, '| status:', msg.status)
     return msg
   } catch (err) {
-    console.error('[twilio] sendSMS error:', err instanceof Error ? err.message : JSON.stringify(err))
+    logTwilioError(err, 'sendSMS')
     throw err
   }
 }
 
 export async function sendWhatsApp({ to, body }: { to: string; body: string }) {
-  console.log('[twilio] sendWhatsApp — to:', to, '| from:', WA_PHONE)
+  const formatted = formatE164FR(to)
+  console.log('[twilio] sendWhatsApp — to (raw):', to, '→ (E.164):', formatted, '| from:', WA_PHONE ?? '(undefined)')
+
   try {
     const msg = await getClient().messages.create({
       from: `whatsapp:${WA_PHONE!}`,
-      to: `whatsapp:${to}`,
+      to: `whatsapp:${formatted}`,
       body,
     })
     console.log('[twilio] sendWhatsApp ok — sid:', msg.sid, '| status:', msg.status)
     return msg
   } catch (err) {
-    console.error('[twilio] sendWhatsApp error:', err instanceof Error ? err.message : JSON.stringify(err))
+    logTwilioError(err, 'sendWhatsApp')
     throw err
   }
 }

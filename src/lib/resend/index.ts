@@ -4,20 +4,44 @@ const apiKey = process.env.RESEND_API_KEY
 console.log('[resend] init — key:', apiKey ? `${apiKey.slice(0, 8)}…` : '(undefined)')
 
 const resend = new Resend(apiKey)
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@mandato.fr'
+const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@mandato.fr'
+const AGENT_DOMAIN = 'withmandato.com'
+
+/**
+ * Builds a "Display Name <local@withmandato.com>" from address for an agent.
+ * "Jean Dupont" → "Jean Dupont <jean.dupont@withmandato.com>"
+ * null / empty  → "Mandato <contact@withmandato.com>"
+ */
+export function buildAgentFromAddress(fullName: string | null | undefined): string {
+  const fallback = `Mandato <contact@${AGENT_DOMAIN}>`
+  if (!fullName?.trim()) return fallback
+
+  const normalize = (s: string) =>
+    s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '')
+
+  const parts = fullName.trim().split(/\s+/)
+  const first = normalize(parts[0])
+  const last = parts.length > 1 ? normalize(parts[parts.length - 1]) : ''
+  const local = last ? `${first}.${last}` : first
+
+  if (!local) return fallback
+  return `${fullName.trim()} <${local}@${AGENT_DOMAIN}>`
+}
 
 export async function sendEmail({
-  to, subject, text, html, attachments,
+  to, subject, text, html, attachments, from,
 }: {
   to: string
   subject: string
   text: string
   html?: string
   attachments?: { filename: string; content: Buffer | string }[]
+  from?: string
 }) {
-  console.log('[resend] sendEmail — to:', to, '| from:', FROM, '| subject:', subject, '| attachments:', attachments?.length ?? 0)
+  const sender = from ?? DEFAULT_FROM
+  console.log('[resend] sendEmail — to:', to, '| from:', sender, '| subject:', subject, '| attachments:', attachments?.length ?? 0)
   const result = await resend.emails.send({
-    from: FROM,
+    from: sender,
     to,
     subject,
     html: html ?? `<div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">${text.replace(/\n/g, '<br>')}</div>`,

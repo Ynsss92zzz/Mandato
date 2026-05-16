@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { sendEmail } from '@/lib/resend'
+import { sendEmail, buildAgentFromAddress } from '@/lib/resend'
 import { sendSMS, sendWhatsApp } from '@/lib/twilio'
 
 export const runtime = 'nodejs'
@@ -52,6 +52,21 @@ export async function GET(request: NextRequest) {
   }
 
   console.log(`[sequences cron] ${enrollments.length} enrollment(s) due`)
+
+  // Build agencyId → "Name <local@withmandato.com>" map for email From header
+  const agencyIds = [...new Set(enrollments.map(e => e.agency_id))]
+  const { data: ownerMembers } = await supabase
+    .from('agency_members')
+    .select('agency_id, profiles(full_name)')
+    .in('agency_id', agencyIds)
+    .eq('role', 'owner')
+
+  const agencyFromMap = new Map<string, string>()
+  for (const m of (ownerMembers ?? [])) {
+    const profile = (m as unknown as { agency_id: string; profiles: { full_name: string | null } | null })
+    agencyFromMap.set(profile.agency_id, buildAgentFromAddress(profile.profiles?.full_name))
+  }
+  console.log('[sequences cron] from addresses:', Object.fromEntries(agencyFromMap))
 
   let processed = 0
   let skipped = 0
@@ -144,11 +159,13 @@ export async function GET(request: NextRequest) {
           if (!lead.email) {
             sendSkipReason = 'lead has no email address'
           } else {
-            console.log(`[sequences cron] ${ctx} — calling sendEmail → ${lead.email}`)
+            const from = agencyFromMap.get(enrollment.agency_id)
+            console.log(`[sequences cron] ${ctx} — calling sendEmail → ${lead.email} | from: ${from ?? '(default)'}`)
             await sendEmail({
               to: lead.email,
               subject: step.subject ?? 'Message de votre conseiller immobilier',
               text: content,
+              from,
             })
             console.log(`[sequences cron] ${ctx} — sendEmail OK`)
             messageSent = true
