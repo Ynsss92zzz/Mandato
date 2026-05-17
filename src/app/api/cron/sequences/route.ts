@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, buildAgentFromAddress } from '@/lib/resend'
-import { sendSMS, sendWhatsApp } from '@/lib/twilio'
+import { sendSMS, sendWhatsApp, formatE164FR } from '@/lib/twilio'
 
 export const runtime = 'nodejs'
 
@@ -48,10 +48,9 @@ export async function GET(request: NextRequest) {
 
   console.log('[sequences cron] fetch returned', enrollments?.length ?? 0, 'enrollment(s)')
 
-  // Dump first enrollment raw so we can verify the join structure
-  if (enrollments && enrollments.length > 0) {
-    console.log('[sequences cron] first enrollment (raw):', JSON.stringify(enrollments[0]))
-  }
+  // Dump all enrollment IDs + first one raw so we can verify the join structure
+  console.log('[sequences cron] enrollment IDs due:', enrollments.map(e => e.id.slice(0, 8)).join(', '))
+  console.log('[sequences cron] first enrollment (raw):', JSON.stringify(enrollments[0]))
 
   if (!enrollments || enrollments.length === 0) {
     console.log('[sequences cron] no enrollments due — checking total actif count...')
@@ -200,8 +199,9 @@ export async function GET(request: NextRequest) {
           if (!lead.phone) {
             sendSkipReason = 'lead has no phone number'
           } else {
-            console.log(`${ctx} → sendSMS to=${lead.phone}`)
-            await sendSMS({ to: lead.phone, body: content })
+            const e164 = formatE164FR(lead.phone.trim())
+            console.log(`${ctx} → sendSMS raw=${lead.phone} e164=${e164}`)
+            await sendSMS({ to: lead.phone.trim(), body: content })
             console.log(`${ctx} ✓ sendSMS OK`)
             messageSent = true
           }
@@ -209,8 +209,9 @@ export async function GET(request: NextRequest) {
           if (!lead.phone) {
             sendSkipReason = 'lead has no phone number'
           } else {
-            console.log(`${ctx} → sendWhatsApp to=${lead.phone}`)
-            await sendWhatsApp({ to: lead.phone, body: content })
+            const e164 = formatE164FR(lead.phone.trim())
+            console.log(`${ctx} → sendWhatsApp raw=${lead.phone} e164=${e164}`)
+            await sendWhatsApp({ to: lead.phone.trim(), body: content })
             console.log(`${ctx} ✓ sendWhatsApp OK`)
             messageSent = true
           }
