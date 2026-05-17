@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, buildAgencyFromAddress } from '@/lib/resend'
 import { sendSMS, sendWhatsApp, formatE164FR } from '@/lib/twilio'
+import { draftMessage } from '@/lib/ai/draft-message'
 
 export const runtime = 'nodejs'
 
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
     .from('sequence_enrollments')
     .select(`
       id, lead_id, sequence_id, agency_id, current_step, next_step_at,
-      leads ( first_name, last_name, email, phone, budget, property_type ),
+      leads ( first_name, last_name, email, phone, budget, property_type, location_desired ),
       sequences ( name )
     `)
     .eq('status', 'actif')
@@ -147,6 +148,7 @@ export async function GET(request: NextRequest) {
         phone: string | null
         budget: number | null
         property_type: string | null
+        location_desired: string | null
       } | null
 
       if (!lead) {
@@ -164,7 +166,7 @@ export async function GET(request: NextRequest) {
       // Fetch the step to execute
       const { data: step, error: stepErr } = await supabase
         .from('sequence_steps')
-        .select('step_order, channel, subject, content_template, delay_hours')
+        .select('step_order, channel, subject, content_template, delay_hours, is_ai_generated')
         .eq('sequence_id', enrollment.sequence_id)
         .eq('step_order', nextStepOrder)
         .single()
@@ -188,34 +190,60 @@ export async function GET(request: NextRequest) {
       console.log(`${ctx} step: order=${step.step_order} channel=${step.channel} delay=${step.delay_hours}h subject="${step.subject ?? ''}"`)
       console.log(`${ctx} content_template (first 120 chars): "${step.content_template?.slice(0, 120) ?? '(empty!)'}"`)
 
-      // Personalize template variables
-      // Supports {{prénom}}/{{prenom}}, {{nom}}, {{email}}, {{téléphone}}/{{telephone}},
-      // {{budget}}, {{bien}} — accents stripped before lookup so any variant matches.
       const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
       const budgetStr = lead.budget
         ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(lead.budget)
         : ''
-      const deaccent = (s: string) =>
-        s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
-      const vars: Record<string, string> = {
-        prenom: lead.first_name,
-        nom: lead.last_name ?? '',
-        email: lead.email ?? '',
-        telephone: lead.phone ?? '',
-        budget: budgetStr,
-        bien: lead.property_type ?? '',
-        // backward compat
-        first_name: lead.first_name,
-        last_name: lead.last_name ?? '',
-        name: fullName,
+
+      let content: string
+
+      if (step.is_ai_generated) {
+        // content_template holds instructions — let AI generate the actual message
+        const leadContext = [
+          `Prénom : ${lead.first_name}`,
+          lead.last_name              && `Nom : ${lead.last_name}`,
+          budgetStr                   && `Budget : ${budgetStr}`,
+          lead.property_type          && `Type de bien recherché : ${lead.property_type}`,
+          lead.location_desired       && `Localisation souhaitée : ${lead.location_desired}`,
+        ].filter(Boolean).join('\n')
+
+        const instructions = `Instructions de l'agent :\n${step.content_template}\n\nDonnées du lead :\n${leadContext}`
+
+        console.log(`${ctx} is_ai_generated=true — calling draftMessage | channel=${step.channel}`)
+        try {
+          content = await draftMessage({
+            lead: { first_name: lead.first_name, last_name: lead.last_name },
+            channel: step.channel as import('@/types').MessageChannel,
+            context: instructions,
+          })
+          console.log(`${ctx} ✓ AI content generated (${content.length} chars)`)
+        } catch (aiErr) {
+          const e = aiErr as Record<string, unknown>
+          console.error(`${ctx} ⚠ draftMessage FAILED — ${e?.message ?? aiErr}`)
+          failed++
+          continue
+        }
+      } else {
+        // Static template — replace {{variables}} with lead data
+        const deaccent = (s: string) =>
+          s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+        const vars: Record<string, string> = {
+          prenom: lead.first_name,
+          nom: lead.last_name ?? '',
+          email: lead.email ?? '',
+          telephone: lead.phone ?? '',
+          budget: budgetStr,
+          bien: lead.property_type ?? '',
+          first_name: lead.first_name,
+          last_name: lead.last_name ?? '',
+          name: fullName,
+        }
+        content = step.content_template
+          .replace(/\{\{([^}]+)\}\}/g, (match, key) => vars[deaccent(key)] ?? match)
+          .replace(/\{first_name\}/g, lead.first_name)
+          .replace(/\{last_name\}/g, lead.last_name ?? '')
+          .replace(/\{name\}/g, fullName)
       }
-      const content = step.content_template
-        // double-brace {{variable}} — accent-insensitive
-        .replace(/\{\{([^}]+)\}\}/g, (match, key) => vars[deaccent(key)] ?? match)
-        // single-brace {variable} — backward compat, exact match only
-        .replace(/\{first_name\}/g, lead.first_name)
-        .replace(/\{last_name\}/g, lead.last_name ?? '')
-        .replace(/\{name\}/g, fullName)
 
       const sentAt = new Date().toISOString()
 
@@ -330,7 +358,7 @@ export async function GET(request: NextRequest) {
           direction: 'sortant',
           content,
           subject: step.subject ?? null,
-          is_ai_generated: false,
+          is_ai_generated: step.is_ai_generated ?? false,
           status: 'sent',
           sent_at: sentAt,
         })
