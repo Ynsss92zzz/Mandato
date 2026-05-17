@@ -1,19 +1,21 @@
 import twilio from 'twilio'
 
+// ─── Brevo — SMS transactionnel ──────────────────────────────────────────────
+const BREVO_API_KEY    = process.env.BREVO_API_KEY
+const BREVO_SMS_SENDER = process.env.BREVO_SMS_SENDER ?? 'Mandato'
+
+// ─── Twilio — WhatsApp uniquement ────────────────────────────────────────────
 const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
 const AUTH_TOKEN  = process.env.TWILIO_AUTH_TOKEN
-const PHONE       = process.env.TWILIO_PHONE_NUMBER
 const WA_PHONE    = process.env.TWILIO_WHATSAPP_NUMBER
-const MSG_SID     = process.env.TWILIO_MESSAGING_SERVICE_SID
 
 console.log(
-  '[twilio] init — SID:', ACCOUNT_SID ?? '(undefined)',
-  '| phone:', PHONE ?? '(undefined)',
-  '| wa:', WA_PHONE ?? '(undefined)',
-  '| messagingServiceSid:', MSG_SID ?? '(not set — will use TWILIO_PHONE_NUMBER)',
+  '[sms] init — Brevo key:', BREVO_API_KEY ? `set (${BREVO_API_KEY.slice(0, 8)}…)` : '⚠ MISSING',
+  '| sender:', BREVO_SMS_SENDER,
+  '| WA (Twilio):', WA_PHONE ?? '(undefined)',
 )
 
-function getClient() {
+function getTwilioClient() {
   return twilio(ACCOUNT_SID!, AUTH_TOKEN!)
 }
 
@@ -29,47 +31,53 @@ export function formatE164FR(phone: string): string {
   if (cleaned.startsWith('0') && cleaned.length === 10) return '+33' + cleaned.slice(1)
   if (/^\d{9}$/.test(cleaned)) return '+33' + cleaned
 
-  // Unrecognized — return as-is and let Twilio surface the error
   return phone
 }
 
-function logTwilioError(err: unknown, context: string) {
-  const e = err as Record<string, unknown>
-  console.error(
-    `[twilio] ${context} FAILED —`,
-    `code: ${e?.code ?? 'unknown'}`,
-    `| status: ${e?.status ?? 'unknown'}`,
-    `| message: ${e?.message ?? ''}`,
-    `| moreInfo: ${e?.moreInfo ?? ''}`,
-  )
-}
-
 export async function sendSMS({ to, body }: { to: string; body: string }) {
-  const formatted = formatE164FR(to)
-  const sender = MSG_SID
-    ? `messagingServiceSid=${MSG_SID}`
-    : `from=${PHONE ?? '(undefined)'}`
-  console.log('[twilio] sendSMS — to (raw):', to, '→ (E.164):', formatted, '|', sender)
+  if (!BREVO_API_KEY) throw new Error('[brevo] BREVO_API_KEY is not set')
 
-  try {
-    const params = MSG_SID
-      ? { to: formatted, body, messagingServiceSid: MSG_SID }
-      : { to: formatted, body, from: PHONE! }
-    const msg = await getClient().messages.create(params)
-    console.log('[twilio] sendSMS ok — sid:', msg.sid, '| status:', msg.status)
-    return msg
-  } catch (err) {
-    logTwilioError(err, 'sendSMS')
-    throw err
+  const recipient = formatE164FR(to.trim())
+  console.log('[brevo] sendSMS — to (raw):', to, '→ (E.164):', recipient, '| sender:', BREVO_SMS_SENDER)
+
+  const res = await fetch('https://api.brevo.com/v3/transactionalSMS/sms', {
+    method: 'POST',
+    headers: {
+      'api-key': BREVO_API_KEY,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({ sender: BREVO_SMS_SENDER, recipient, content: body }),
+  })
+
+  const data = await res.json() as Record<string, unknown>
+
+  if (!res.ok) {
+    console.error(
+      '[brevo] sendSMS FAILED —',
+      `status: ${res.status}`,
+      `| code: ${data.code ?? '?'}`,
+      `| message: ${data.message ?? JSON.stringify(data)}`,
+    )
+    throw new Error(`Brevo SMS ${res.status}: ${data.message ?? JSON.stringify(data)}`)
   }
+
+  console.log(
+    '[brevo] sendSMS ok —',
+    `messageId: ${data.messageId}`,
+    `| reference: ${data.reference}`,
+    `| smsCount: ${data.smsCount}`,
+    `| remainingCredits: ${data.remainingCredits}`,
+  )
+  return data
 }
 
 export async function sendWhatsApp({ to, body }: { to: string; body: string }) {
-  const formatted = formatE164FR(to)
+  const formatted = formatE164FR(to.trim())
   console.log('[twilio] sendWhatsApp — to (raw):', to, '→ (E.164):', formatted, '| from:', WA_PHONE ?? '(undefined)')
 
   try {
-    const msg = await getClient().messages.create({
+    const msg = await getTwilioClient().messages.create({
       from: `whatsapp:${WA_PHONE!}`,
       to: `whatsapp:${formatted}`,
       body,
@@ -77,7 +85,14 @@ export async function sendWhatsApp({ to, body }: { to: string; body: string }) {
     console.log('[twilio] sendWhatsApp ok — sid:', msg.sid, '| status:', msg.status)
     return msg
   } catch (err) {
-    logTwilioError(err, 'sendWhatsApp')
+    const e = err as Record<string, unknown>
+    console.error(
+      '[twilio] sendWhatsApp FAILED —',
+      `code: ${e?.code ?? 'unknown'}`,
+      `| status: ${e?.status ?? 'unknown'}`,
+      `| message: ${e?.message ?? ''}`,
+      `| moreInfo: ${e?.moreInfo ?? ''}`,
+    )
     throw err
   }
 }

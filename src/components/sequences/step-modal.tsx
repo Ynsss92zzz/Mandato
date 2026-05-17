@@ -20,7 +20,7 @@ const DELAY_PRESETS = [
   { value: 336, label: '2 semaines' },
 ]
 
-const VARIABLES = ['{{prenom}}', '{{nom}}', '{{email}}', '{{telephone}}']
+const VARIABLES = ['{{prenom}}', '{{nom}}', '{{email}}', '{{telephone}}', '{{budget}}']
 
 const inputCls = 'w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] placeholder-zinc-300 focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10 transition-colors'
 

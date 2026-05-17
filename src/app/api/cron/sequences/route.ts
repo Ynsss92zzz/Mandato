@@ -22,8 +22,9 @@ export async function GET(request: NextRequest) {
   console.log('[sequences cron] ═══ START ═══')
   console.log('[sequences cron] env — RESEND_API_KEY:', process.env.RESEND_API_KEY ? `set (${process.env.RESEND_API_KEY.slice(0, 8)}…)` : '⚠ MISSING')
   console.log('[sequences cron] env — RESEND_FROM_EMAIL:', process.env.RESEND_FROM_EMAIL ?? '(default noreply@mandato.fr)')
-  console.log('[sequences cron] env — TWILIO_ACCOUNT_SID:', process.env.TWILIO_ACCOUNT_SID ? `set (${process.env.TWILIO_ACCOUNT_SID.slice(0, 8)}…)` : '⚠ MISSING')
-  console.log('[sequences cron] env — TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ?? '⚠ MISSING')
+  console.log('[sequences cron] env — BREVO_API_KEY:', process.env.BREVO_API_KEY ? `set (${process.env.BREVO_API_KEY.slice(0, 8)}…)` : '⚠ MISSING')
+  console.log('[sequences cron] env — BREVO_SMS_SENDER:', process.env.BREVO_SMS_SENDER ?? '(default Mandato)')
+  console.log('[sequences cron] env — TWILIO_WHATSAPP_NUMBER:', process.env.TWILIO_WHATSAPP_NUMBER ?? '⚠ MISSING (WhatsApp only)')
 
   const supabase = createAdminClient()
   const now = new Date().toISOString()
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
     .from('sequence_enrollments')
     .select(`
       id, lead_id, sequence_id, agency_id, current_step, next_step_at,
-      leads ( first_name, last_name, email, phone ),
+      leads ( first_name, last_name, email, phone, budget ),
       sequences ( name )
     `)
     .eq('status', 'actif')
@@ -112,6 +113,7 @@ export async function GET(request: NextRequest) {
         last_name: string | null
         email: string | null
         phone: string | null
+        budget: number | null
       } | null
 
       if (!lead) {
@@ -154,8 +156,18 @@ export async function GET(request: NextRequest) {
       console.log(`${ctx} content_template (first 120 chars): "${step.content_template?.slice(0, 120) ?? '(empty!)'}"`)
 
       // Personalize template variables
+      // UI variables: {{prenom}}, {{nom}}, {{email}}, {{telephone}}, {{budget}}
       const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
+      const budgetStr = lead.budget
+        ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(lead.budget)
+        : ''
       const content = step.content_template
+        .replace(/\{\{prenom\}\}/gi, lead.first_name)
+        .replace(/\{\{nom\}\}/gi, lead.last_name ?? '')
+        .replace(/\{\{email\}\}/gi, lead.email ?? '')
+        .replace(/\{\{telephone\}\}/gi, lead.phone ?? '')
+        .replace(/\{\{budget\}\}/gi, budgetStr)
+        // backward compat: {first_name}, {last_name}, {name}
         .replace(/\{first_name\}/g, lead.first_name)
         .replace(/\{last_name\}/g, lead.last_name ?? '')
         .replace(/\{name\}/g, fullName)
