@@ -8,14 +8,18 @@ export const runtime = 'nodejs'
 export async function GET(request: Request) {
   const auth = request.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    console.error('[weekly-report] Unauthorized — received:', auth?.slice(0, 20) ?? '(none)')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  console.log('[weekly-report] ═══ START ═══')
+  console.log('[weekly-report] env — RESEND_API_KEY:', process.env.RESEND_API_KEY ? `set (${process.env.RESEND_API_KEY.slice(0, 8)}…)` : '⚠ MISSING')
+  console.log('[weekly-report] env — RESEND_FROM_EMAIL:', process.env.RESEND_FROM_EMAIL ?? '(default noreply@mandato.fr)')
 
   const supabase = createAdminClient()
   const now = new Date()
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-  // Week boundaries (Monday → Sunday)
   const weekStart = new Date(oneWeekAgo)
   weekStart.setHours(0, 0, 0, 0)
   const weekEnd = new Date(now)
@@ -23,98 +27,136 @@ export async function GET(request: Request) {
 
   const weekStartISO = weekStart.toISOString().slice(0, 10)
   const weekEndISO = weekEnd.toISOString().slice(0, 10)
+  console.log('[weekly-report] week:', weekStartISO, '→', weekEndISO)
 
-  const { data: agencies } = await supabase.from('agencies').select('id, name')
+  const { data: agencies, error: agencyErr } = await supabase.from('agencies').select('id, name')
+  if (agencyErr) {
+    console.error('[weekly-report] ⚠ agencies fetch error — code:', agencyErr.code, '| message:', agencyErr.message)
+    return NextResponse.json({ error: agencyErr.message }, { status: 500 })
+  }
+  console.log('[weekly-report] agencies found:', agencies?.length ?? 0, agencies?.map(a => `${a.id.slice(0, 8)} "${a.name}"`).join(', '))
+
+  if (!agencies || agencies.length === 0) {
+    console.log('[weekly-report] ═══ END (no agencies) ═══')
+    return NextResponse.json({ success: true, sent: 0 })
+  }
+
   let sent = 0
+  let failed = 0
+  let skipped = 0
 
-  for (const agency of agencies ?? []) {
-    const { data: members } = await supabase
-      .from('agency_members')
-      .select('role, profiles(email, full_name)')
-      .eq('agency_id', agency.id)
-      .eq('role', 'owner')
-
-    const ownerProfile = (members?.[0]?.profiles) as { email: string; full_name: string | null } | null
-    if (!ownerProfile?.email) continue
-
-    const [newLeadsRes, totalLeadsRes, wonLeadsRes, apptRes] = await Promise.all([
-      supabase
-        .from('leads')
-        .select('id', { count: 'exact', head: true })
-        .eq('agency_id', agency.id)
-        .gte('created_at', oneWeekAgo.toISOString()),
-      supabase
-        .from('leads')
-        .select('id', { count: 'exact', head: true })
-        .eq('agency_id', agency.id),
-      supabase
-        .from('leads')
-        .select('id', { count: 'exact', head: true })
-        .eq('agency_id', agency.id)
-        .eq('status', 'gagne'),
-      supabase
-        .from('appointments')
-        .select('id, title, scheduled_at')
-        .eq('agency_id', agency.id)
-        .gte('scheduled_at', now.toISOString())
-        .order('scheduled_at', { ascending: true })
-        .limit(5),
-    ])
-
-    const newLeads = newLeadsRes.count ?? 0
-    const totalLeads = totalLeadsRes.count ?? 0
-    const wonLeads = wonLeadsRes.count ?? 0
-    const convRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0
-    const appointments = apptRes.data ?? []
-
-    // Save report to DB (upsert — idempotent if cron re-runs)
-    // weekly_reports is not yet in generated types (migration pending) — cast via unknown
-    await (supabase as unknown as { from: (t: string) => { upsert: (d: object, o: object) => Promise<unknown> } })
-      .from('weekly_reports')
-      .upsert({
-        agency_id: agency.id,
-        week_start: weekStartISO,
-        week_end: weekEndISO,
-        new_leads: newLeads,
-        total_leads: totalLeads,
-        won_leads: wonLeads,
-        conv_rate: convRate,
-        appointments_count: appointments.length,
-        email_sent: false,
-      }, { onConflict: 'agency_id,week_start' })
-
-    // Generate PDF
-    let pdfBuffer: Buffer | null = null
+  for (const agency of agencies) {
+    const ctx = `[agency=${agency.id.slice(0, 8)} "${agency.name}"]`
     try {
-      pdfBuffer = await generateWeeklyReportPdf({
-        agencyName: agency.name,
-        weekStart: weekStartISO,
-        weekEnd: weekEndISO,
-        newLeads,
-        totalLeads,
-        wonLeads,
-        convRate,
-        appointmentsCount: appointments.length,
-      })
-    } catch (pdfErr) {
-      console.error('[weekly-report] PDF generation failed for agency', agency.id, pdfErr instanceof Error ? pdfErr.message : pdfErr)
-    }
+      console.log(`${ctx} ── processing`)
 
-    const apptRows = appointments.length > 0
-      ? appointments.map(a => `
+      const { data: members, error: membersErr } = await supabase
+        .from('agency_members')
+        .select('role, profiles(email, full_name)')
+        .eq('agency_id', agency.id)
+        .eq('role', 'owner')
+
+      if (membersErr) {
+        console.error(`${ctx} ⚠ members fetch error:`, membersErr.message)
+      }
+
+      const ownerProfile = (members?.[0]?.profiles) as { email: string; full_name: string | null } | null
+      console.log(`${ctx} owner profile: ${ownerProfile ? `"${ownerProfile.full_name}" <${ownerProfile.email}>` : '(none found)'}`)
+
+      if (!ownerProfile?.email) {
+        console.warn(`${ctx} ⚠ no owner email — skipping`)
+        skipped++
+        continue
+      }
+
+      const [newLeadsRes, totalLeadsRes, wonLeadsRes, apptRes] = await Promise.all([
+        supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('agency_id', agency.id)
+          .gte('created_at', oneWeekAgo.toISOString()),
+        supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('agency_id', agency.id),
+        supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('agency_id', agency.id)
+          .eq('status', 'gagne'),
+        supabase
+          .from('appointments')
+          .select('id, title, scheduled_at')
+          .eq('agency_id', agency.id)
+          .gte('scheduled_at', now.toISOString())
+          .order('scheduled_at', { ascending: true })
+          .limit(5),
+      ])
+
+      if (newLeadsRes.error) console.error(`${ctx} ⚠ newLeads query error:`, newLeadsRes.error.message)
+      if (totalLeadsRes.error) console.error(`${ctx} ⚠ totalLeads query error:`, totalLeadsRes.error.message)
+      if (wonLeadsRes.error) console.error(`${ctx} ⚠ wonLeads query error:`, wonLeadsRes.error.message)
+      if (apptRes.error) console.error(`${ctx} ⚠ appointments query error:`, apptRes.error.message)
+
+      const newLeads = newLeadsRes.count ?? 0
+      const totalLeads = totalLeadsRes.count ?? 0
+      const wonLeads = wonLeadsRes.count ?? 0
+      const convRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0
+      const appointments = apptRes.data ?? []
+
+      console.log(`${ctx} stats — newLeads=${newLeads} total=${totalLeads} won=${wonLeads} conv=${convRate}% appts=${appointments.length}`)
+
+      // Save report to DB
+      const { error: upsertErr } = await (supabase as unknown as {
+        from: (t: string) => { upsert: (d: object, o: object) => Promise<{ error: { message: string } | null }> }
+      })
+        .from('weekly_reports')
+        .upsert({
+          agency_id: agency.id,
+          week_start: weekStartISO,
+          week_end: weekEndISO,
+          new_leads: newLeads,
+          total_leads: totalLeads,
+          won_leads: wonLeads,
+          conv_rate: convRate,
+          appointments_count: appointments.length,
+          email_sent: false,
+        }, { onConflict: 'agency_id,week_start' })
+      if (upsertErr) console.error(`${ctx} ⚠ weekly_reports upsert error:`, upsertErr.message)
+
+      // Generate PDF
+      let pdfBuffer: Buffer | null = null
+      try {
+        pdfBuffer = await generateWeeklyReportPdf({
+          agencyName: agency.name,
+          weekStart: weekStartISO,
+          weekEnd: weekEndISO,
+          newLeads,
+          totalLeads,
+          wonLeads,
+          convRate,
+          appointmentsCount: appointments.length,
+        })
+        console.log(`${ctx} PDF generated — size: ${pdfBuffer.byteLength} bytes`)
+      } catch (pdfErr) {
+        console.error(`${ctx} ⚠ PDF generation failed:`, pdfErr instanceof Error ? pdfErr.message : pdfErr)
+      }
+
+      const apptRows = appointments.length > 0
+        ? appointments.map(a => `
           <tr>
             <td style="padding:8px 0;color:#475569;font-size:14px;border-bottom:1px solid #f1f5f9">
               📅 ${new Date(a.scheduled_at).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </td>
             <td style="padding:8px 0 8px 12px;color:#1B2B4B;font-size:14px;font-weight:500;border-bottom:1px solid #f1f5f9">${a.title}</td>
           </tr>`).join('')
-      : `<tr><td colspan="2" style="padding:8px 0;color:#94a3b8;font-size:14px">Aucun rendez-vous à venir</td></tr>`
+        : `<tr><td colspan="2" style="padding:8px 0;color:#94a3b8;font-size:14px">Aucun rendez-vous à venir</td></tr>`
 
-    const greeting = ownerProfile.full_name ? ` ${ownerProfile.full_name.split(' ')[0]}` : ''
-    const dateLabel = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-    const subject = `📊 Votre rapport hebdomadaire Mandato — ${dateLabel}`
+      const greeting = ownerProfile.full_name ? ` ${ownerProfile.full_name.split(' ')[0]}` : ''
+      const dateLabel = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+      const subject = `📊 Votre rapport hebdomadaire Mandato — ${dateLabel}`
 
-    const html = `
+      const html = `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#f8fafc">
   <div style="background:#1B2B4B;padding:32px 40px;text-align:center">
     <span style="color:white;font-size:24px;font-weight:700;letter-spacing:-0.5px">Mandato</span>
@@ -163,26 +205,50 @@ export async function GET(request: Request) {
   </div>
 </div>`
 
-    const text = `${subject}\n\nNouveaux leads cette semaine : ${newLeads}\nTotal leads : ${totalLeads}\nTaux de conversion : ${convRate}%\n\nProchains RDV :\n${appointments.map(a => `- ${a.title} — ${new Date(a.scheduled_at).toLocaleDateString('fr-FR')}`).join('\n') || 'Aucun'}`
+      const text = `${subject}\n\nNouveaux leads cette semaine : ${newLeads}\nTotal leads : ${totalLeads}\nTaux de conversion : ${convRate}%\n\nProchains RDV :\n${appointments.map(a => `- ${a.title} — ${new Date(a.scheduled_at).toLocaleDateString('fr-FR')}`).join('\n') || 'Aucun'}`
 
-    const filename = `rapport-semaine-${weekStartISO}.pdf`
-    await sendEmail({
-      to: ownerProfile.email,
-      subject,
-      html,
-      text,
-      ...(pdfBuffer ? { attachments: [{ filename, content: pdfBuffer }] } : {}),
-    })
+      const filename = `rapport-semaine-${weekStartISO}.pdf`
+      console.log(`${ctx} → sendEmail to=${ownerProfile.email} subject="${subject}" pdf=${pdfBuffer ? `${pdfBuffer.byteLength}b` : 'none'}`)
 
-    // Mark email as sent (cast — weekly_reports not yet in generated types)
-    await (supabase as unknown as { from: (t: string) => { update: (d: object) => { eq: (k: string, v: string) => { eq: (k: string, v: string) => Promise<unknown> } } } })
-      .from('weekly_reports')
-      .update({ email_sent: true })
-      .eq('agency_id', agency.id)
-      .eq('week_start', weekStartISO)
+      try {
+        await sendEmail({
+          to: ownerProfile.email,
+          subject,
+          html,
+          text,
+          ...(pdfBuffer ? { attachments: [{ filename, content: pdfBuffer }] } : {}),
+        })
+        console.log(`${ctx} ✓ sendEmail OK`)
+      } catch (emailErr) {
+        const e = emailErr as Record<string, unknown>
+        console.error(
+          `${ctx} ⚠ sendEmail FAILED —`,
+          `name: ${e?.name ?? '?'}`,
+          `| message: ${e?.message ?? '?'}`,
+          `| statusCode: ${e?.statusCode ?? e?.status ?? '?'}`,
+          `| body: ${JSON.stringify(e?.response ?? e?.body ?? e?.data ?? '(no body)')}`,
+        )
+        failed++
+        continue
+      }
 
-    sent++
+      // Mark email as sent
+      await (supabase as unknown as {
+        from: (t: string) => { update: (d: object) => { eq: (k: string, v: string) => { eq: (k: string, v: string) => Promise<unknown> } } }
+      })
+        .from('weekly_reports')
+        .update({ email_sent: true })
+        .eq('agency_id', agency.id)
+        .eq('week_start', weekStartISO)
+
+      sent++
+    } catch (err) {
+      const e = err as Record<string, unknown>
+      console.error(`${ctx} ⚠ unexpected error — ${e?.message ?? JSON.stringify(err)}`)
+      failed++
+    }
   }
 
-  return NextResponse.json({ success: true, sent })
+  console.log(`[weekly-report] ═══ END — sent=${sent} skipped=${skipped} failed=${failed} ═══`)
+  return NextResponse.json({ success: true, sent, skipped, failed })
 }
