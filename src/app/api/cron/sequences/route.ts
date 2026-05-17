@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     .from('sequence_enrollments')
     .select(`
       id, lead_id, sequence_id, agency_id, current_step, next_step_at,
-      leads ( first_name, last_name, email, phone, budget ),
+      leads ( first_name, last_name, email, phone, budget, property_type ),
       sequences ( name )
     `)
     .eq('status', 'actif')
@@ -147,6 +147,7 @@ export async function GET(request: NextRequest) {
         email: string | null
         phone: string | null
         budget: number | null
+        property_type: string | null
       } | null
 
       if (!lead) {
@@ -189,18 +190,30 @@ export async function GET(request: NextRequest) {
       console.log(`${ctx} content_template (first 120 chars): "${step.content_template?.slice(0, 120) ?? '(empty!)'}"`)
 
       // Personalize template variables
-      // UI variables: {{prenom}}, {{nom}}, {{email}}, {{telephone}}, {{budget}}
+      // Supports {{prénom}}/{{prenom}}, {{nom}}, {{email}}, {{téléphone}}/{{telephone}},
+      // {{budget}}, {{bien}} — accents stripped before lookup so any variant matches.
       const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
       const budgetStr = lead.budget
         ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(lead.budget)
         : ''
+      const deaccent = (s: string) =>
+        s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+      const vars: Record<string, string> = {
+        prenom: lead.first_name,
+        nom: lead.last_name ?? '',
+        email: lead.email ?? '',
+        telephone: lead.phone ?? '',
+        budget: budgetStr,
+        bien: lead.property_type ?? '',
+        // backward compat
+        first_name: lead.first_name,
+        last_name: lead.last_name ?? '',
+        name: fullName,
+      }
       const content = step.content_template
-        .replace(/\{\{prenom\}\}/gi, lead.first_name)
-        .replace(/\{\{nom\}\}/gi, lead.last_name ?? '')
-        .replace(/\{\{email\}\}/gi, lead.email ?? '')
-        .replace(/\{\{telephone\}\}/gi, lead.phone ?? '')
-        .replace(/\{\{budget\}\}/gi, budgetStr)
-        // backward compat: {first_name}, {last_name}, {name}
+        // double-brace {{variable}} — accent-insensitive
+        .replace(/\{\{([^}]+)\}\}/g, (match, key) => vars[deaccent(key)] ?? match)
+        // single-brace {variable} — backward compat, exact match only
         .replace(/\{first_name\}/g, lead.first_name)
         .replace(/\{last_name\}/g, lead.last_name ?? '')
         .replace(/\{name\}/g, fullName)
