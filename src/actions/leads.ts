@@ -54,11 +54,13 @@ export async function createLead(formData: FormData) {
 
   if (error) return { error: error.message }
 
-  // Trigger sequences with trigger_on='lead_created'
-  try {
-    await autoEnrollNewLead(agencyId, data.id)
-  } catch (err) {
-    console.error('[createLead] auto-enroll threw:', err)
+  // Trigger sequences with trigger_on='lead_created' — only if checkbox is checked
+  if (formData.get('auto_enroll') === '1') {
+    try {
+      await autoEnrollNewLead(agencyId, data.id)
+    } catch (err) {
+      console.error('[createLead] auto-enroll threw:', err)
+    }
   }
 
   revalidatePath('/leads')

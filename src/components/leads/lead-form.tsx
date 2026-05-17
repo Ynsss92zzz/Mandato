@@ -230,6 +230,19 @@ export function LeadForm({ lead, onSuccess, onClose }: LeadFormProps) {
             </div>
           )}
 
+          {!isEdit && (
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="auto_enroll"
+                value="1"
+                defaultChecked
+                className="w-4 h-4 rounded border-zinc-300 text-[#FF6B35] accent-[#FF6B35] cursor-pointer"
+              />
+              <span className="text-sm text-zinc-600">Démarrer la séquence automatique</span>
+            </label>
+          )}
+
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
               {error}
