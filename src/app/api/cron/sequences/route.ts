@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
   const now = new Date().toISOString()
   console.log('[sequences cron] now =', now)
 
-  // Fetch enrollments whose next step is due
+  // Fetch enrollments whose next step is due (next_step_at <= now OR next_step_at IS NULL)
+  // NULL next_step_at is treated as immediately due — PostgreSQL excludes NULL in lte() comparisons
   const { data: enrollments, error } = await supabase
     .from('sequence_enrollments')
     .select(`
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
       sequences ( name )
     `)
     .eq('status', 'actif')
-    .lte('next_step_at', now)
+    .or(`next_step_at.lte.${now},next_step_at.is.null`)
     .limit(100)
 
   if (error) {
@@ -46,22 +47,39 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  console.log('[sequences cron] fetch returned', enrollments?.length ?? 0, 'enrollment(s)')
+  console.log('[sequences cron] fetch returned', enrollments?.length ?? 0, 'enrollment(s) due (next_step_at <=', now, ')')
 
-  // Dump all enrollment IDs + first one raw so we can verify the join structure
-  console.log('[sequences cron] enrollment IDs due:', enrollments.map(e => e.id.slice(0, 8)).join(', '))
-  console.log('[sequences cron] first enrollment (raw):', JSON.stringify(enrollments[0]))
+  // DIAGNOSTIC: dump ALL actif enrollments regardless of next_step_at to expose NULL / future values
+  {
+    const { data: allActif } = await supabase
+      .from('sequence_enrollments')
+      .select('id, sequence_id, status, current_step, next_step_at')
+      .eq('status', 'actif')
+      .order('next_step_at', { ascending: true, nullsFirst: true })
+
+    console.log('[sequences cron] ALL actif enrollments in DB:', JSON.stringify(
+      (allActif ?? []).map(e => ({
+        id: e.id.slice(0, 8),
+        seq: e.sequence_id.slice(0, 8),
+        step: e.current_step,
+        next_step_at: e.next_step_at ?? 'NULL',
+        verdict: e.next_step_at === null
+          ? '⚠ NULL → excluded by lte filter'
+          : e.next_step_at <= now
+            ? '✓ due'
+            : `✗ future (${e.next_step_at})`,
+      }))
+    ))
+  }
 
   if (!enrollments || enrollments.length === 0) {
-    console.log('[sequences cron] no enrollments due — checking total actif count...')
-    const { count } = await supabase
-      .from('sequence_enrollments')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'actif')
-    console.log('[sequences cron] total actif enrollments in DB (any next_step_at):', count)
     console.log('[sequences cron] ═══ END (nothing to do) ═══')
     return NextResponse.json({ ok: true, processed: 0, timestamp: now })
   }
+
+  // Dump enrollment IDs being processed + first one raw
+  console.log('[sequences cron] processing IDs:', enrollments.map(e => e.id.slice(0, 8)).join(', '))
+  console.log('[sequences cron] first enrollment (raw):', JSON.stringify(enrollments[0]))
 
   // Build agencyId → "Name <local@withmandato.com>" map for email From header
   const agencyIds = [...new Set(enrollments.map(e => e.agency_id))]
