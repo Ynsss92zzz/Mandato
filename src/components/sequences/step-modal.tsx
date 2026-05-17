@@ -12,13 +12,33 @@ const CHANNELS: { value: MessageChannel; label: string; icon: string; soon?: boo
 ]
 
 const DELAY_PRESETS = [
-  { value: 1, label: '1 heure' },
-  { value: 24, label: '1 jour' },
-  { value: 48, label: '2 jours' },
-  { value: 72, label: '3 jours' },
-  { value: 168, label: '1 semaine' },
-  { value: 336, label: '2 semaines' },
+  { value: 5 / 60,  label: '5 minutes' },
+  { value: 0.5,     label: '30 minutes' },
+  { value: 1,       label: '1 heure' },
+  { value: 24,      label: '1 jour' },
+  { value: 48,      label: '2 jours' },
+  { value: 72,      label: '3 jours' },
+  { value: 168,     label: '1 semaine' },
+  { value: 336,     label: '2 semaines' },
 ]
+
+type CustomUnit = 'minutes' | 'heures' | 'jours'
+
+function toHours(val: number, unit: CustomUnit): number {
+  if (unit === 'minutes') return val / 60
+  if (unit === 'jours')   return val * 24
+  return val
+}
+
+function isPreset(hours: number): boolean {
+  return DELAY_PRESETS.some(p => Math.abs(p.value - hours) < 0.001)
+}
+
+function inferCustom(hours: number): { value: number; unit: CustomUnit } {
+  if (hours < 1)                            return { value: Math.round(hours * 60), unit: 'minutes' }
+  if (hours >= 24 && hours % 24 === 0)      return { value: hours / 24, unit: 'jours' }
+  return { value: hours, unit: 'heures' }
+}
 
 const VARIABLES = ['{{prenom}}', '{{nom}}', '{{email}}', '{{telephone}}', '{{budget}}', '{{bien}}']
 
@@ -34,8 +54,12 @@ interface StepModalProps {
 export function StepModal({ step, templates = [], onSave, onClose }: StepModalProps) {
   const isEdit = !!step
   const [channel, setChannel] = useState<MessageChannel>(step?.channel ?? 'email')
-  const [delayHours, setDelayHours] = useState(step?.delay_hours ?? 24)
-  const [customDelay, setCustomDelay] = useState(!DELAY_PRESETS.find((p) => p.value === (step?.delay_hours ?? 24)))
+  const initialHours = step?.delay_hours ?? 24
+  const [delayHours, setDelayHours] = useState(initialHours)
+  const [customDelay, setCustomDelay] = useState(!isPreset(initialHours))
+  const initialCustom = inferCustom(initialHours)
+  const [customValue, setCustomValue] = useState(initialCustom.value)
+  const [customUnit, setCustomUnit] = useState<CustomUnit>(initialCustom.unit)
   const [subject, setSubject] = useState(step?.subject ?? '')
   const [content, setContent] = useState(step?.content_template ?? '')
   const [isAI, setIsAI] = useState(step?.is_ai_generated ?? false)
@@ -113,11 +137,11 @@ export function StepModal({ step, templates = [], onSave, onClose }: StepModalPr
             <div className="flex flex-wrap gap-1.5 mb-2">
               {DELAY_PRESETS.map((p) => (
                 <button
-                  key={p.value}
+                  key={p.label}
                   type="button"
                   onClick={() => { setDelayHours(p.value); setCustomDelay(false) }}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                    !customDelay && delayHours === p.value
+                    !customDelay && Math.abs(delayHours - p.value) < 0.001
                       ? 'border-[#FF6B35] bg-[#FF6B35]/5 text-[#FF6B35]'
                       : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
                   }`}
@@ -140,11 +164,27 @@ export function StepModal({ step, templates = [], onSave, onClose }: StepModalPr
                 <input
                   type="number"
                   min="1"
-                  value={delayHours}
-                  onChange={(e) => setDelayHours(parseInt(e.target.value) || 1)}
+                  value={customValue}
+                  onChange={(e) => {
+                    const val = Math.max(1, parseInt(e.target.value) || 1)
+                    setCustomValue(val)
+                    setDelayHours(toHours(val, customUnit))
+                  }}
                   className={`${inputCls} w-24`}
                 />
-                <span className="text-sm text-zinc-500">heures</span>
+                <select
+                  value={customUnit}
+                  onChange={(e) => {
+                    const unit = e.target.value as CustomUnit
+                    setCustomUnit(unit)
+                    setDelayHours(toHours(customValue, unit))
+                  }}
+                  className={`${inputCls} w-32`}
+                >
+                  <option value="minutes">minutes</option>
+                  <option value="heures">heures</option>
+                  <option value="jours">jours</option>
+                </select>
               </div>
             )}
           </div>

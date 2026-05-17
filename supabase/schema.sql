@@ -193,7 +193,7 @@ create table public.sequence_steps (
   sequence_id      uuid not null references public.sequences(id) on delete cascade,
   agency_id        uuid not null references public.agencies(id) on delete cascade,
   step_order       smallint not null,
-  delay_hours      integer not null default 24,
+  delay_hours      numeric(10,4) not null default 24,
   channel          message_channel not null,
   subject          text,
   content_template text not null,
