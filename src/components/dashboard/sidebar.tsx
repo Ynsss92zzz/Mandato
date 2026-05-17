@@ -15,6 +15,7 @@ import {
   Settings,
   Clock,
   BookOpen,
+  CreditCard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +25,7 @@ const navMain = [
   { href: '/conversations',        icon: MessageSquare,   label: 'Conversations' },
   { href: '/appointments',         icon: Calendar,        label: 'Rendez-vous' },
   { href: '/sequences',            icon: Zap,             label: 'Séquences' },
+  { href: '/settings/billing',     icon: CreditCard,      label: 'Mon plan' },
   { href: '/sequences/templates',  icon: FileText,        label: 'Templates' },
   { href: '/weekly-reports',       icon: BookOpen,        label: 'Résumés hebdo' },
 ]

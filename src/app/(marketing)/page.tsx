@@ -18,7 +18,7 @@ function Hero() {
       <div className="relative max-w-5xl mx-auto text-center">
         <span className="inline-flex items-center gap-2 bg-[#FF6B35]/10 text-[#FF6B35] text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
           <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
-          Nouvelle fonctionnalité : Relances WhatsApp automatiques
+          Nouvelle fonctionnalité : Séquences de relances automatiques
         </span>
 
         <h1 className="text-5xl md:text-6xl font-bold text-[#1B2B4B] leading-tight tracking-tight mb-6">
@@ -28,7 +28,7 @@ function Hero() {
         </h1>
 
         <p className="text-xl text-zinc-500 leading-relaxed max-w-2xl mx-auto mb-10">
-          Mandato capture, qualifie et relance vos prospects par email, SMS et WhatsApp — automatiquement.
+          Mandato capture, qualifie et relance vos prospects par email — automatiquement.
           Concentrez-vous sur la vente, l&apos;IA s&apos;occupe du reste.
         </p>
 
@@ -108,7 +108,7 @@ function Hero() {
                     {[
                       { label: 'Email envoyé', time: 'il y a 2m', dot: 'bg-green-400' },
                       { label: 'Lead qualifié', time: 'il y a 5m', dot: 'bg-blue-400' },
-                      { label: 'SMS envoyé', time: 'il y a 8m', dot: 'bg-amber-400' },
+                      { label: 'Email envoyé', time: 'il y a 8m', dot: 'bg-amber-400' },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${item.dot} flex-none`} />
@@ -175,11 +175,6 @@ const FEATURES = [
     icon: '📧',
     title: 'Relances email automatiques',
     desc: 'Séquences d\'emails personnalisés déclenchées automatiquement selon le comportement du lead. Taux de réponse moyen : +67%.',
-  },
-  {
-    icon: '💬',
-    title: 'SMS & WhatsApp intégrés',
-    desc: 'Atteignez vos leads sur leur canal préféré. Les messages WhatsApp ont un taux d\'ouverture de 98%.',
   },
   {
     icon: '📅',
@@ -396,13 +391,6 @@ const TESTIMONIALS = [
     stars: 5,
   },
   {
-    name: 'Thomas Mercier',
-    role: 'Directeur agence — Bordeaux',
-    avatar: 'TM',
-    quote: 'L\'intégration WhatsApp a changé la donne. Nos leads répondent 3x plus vite. Le ROI a été immédiat dès le premier mois.',
-    stars: 5,
-  },
-  {
     name: 'Isabelle Renard',
     role: 'Équipe de 5 agents — Paris',
     avatar: 'IR',
@@ -469,7 +457,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Quels canaux de messagerie sont supportés ?',
-    a: 'Email (via Resend), SMS (via Twilio) et WhatsApp Business (via Twilio). Les canaux disponibles dépendent de votre plan. Le plan Pro et Agence incluent les 3 canaux.',
+    a: 'Email via Resend. Les séquences de relances email sont disponibles sur tous les plans. D\'autres canaux seront ajoutés prochainement.',
   },
   {
     q: 'Comment fonctionne le programme de parrainage ?',
