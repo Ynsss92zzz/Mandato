@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/resend'
-import { generateWeeklyReportPdf } from '@/lib/pdf/weekly-report'
 
 export const runtime = 'nodejs'
 
@@ -141,25 +140,7 @@ export async function GET(request: Request) {
         }, { onConflict: 'agency_id,week_start' })
       if (upsertErr) console.error(`${ctx} ⚠ weekly_reports upsert error:`, upsertErr.message)
 
-      // Generate PDF
-      let pdfBuffer: Buffer | null = null
-      try {
-        pdfBuffer = await generateWeeklyReportPdf({
-          agencyName: agency.name,
-          weekStart: weekStartISO,
-          weekEnd: weekEndISO,
-          newLeads,
-          totalLeads,
-          wonLeads,
-          convRate,
-          appointmentsCount: appointments.length,
-        })
-        console.log(`${ctx} PDF generated — size: ${pdfBuffer.byteLength} bytes`)
-      } catch (pdfErr) {
-        console.error(`${ctx} ⚠ PDF generation failed:`, pdfErr instanceof Error ? pdfErr.message : pdfErr)
-      }
-
-      const apptRows = appointments.length > 0
+const apptRows = appointments.length > 0
         ? appointments.map(a => `
           <tr>
             <td style="padding:8px 0;color:#475569;font-size:14px;border-bottom:1px solid #f1f5f9">
@@ -224,8 +205,7 @@ export async function GET(request: Request) {
 
       const text = `${subject}\n\nNouveaux leads cette semaine : ${newLeads}\nTotal leads : ${totalLeads}\nTaux de conversion : ${convRate}%\n\nProchains RDV :\n${appointments.map(a => `- ${a.title} — ${new Date(a.scheduled_at).toLocaleDateString('fr-FR')}`).join('\n') || 'Aucun'}`
 
-      const filename = `rapport-semaine-${weekStartISO}.pdf`
-      console.log(`${ctx} → sendEmail to=${ownerProfile.email} subject="${subject}" pdf=${pdfBuffer ? `${pdfBuffer.byteLength}b` : 'none'}`)
+      console.log(`${ctx} → sendEmail to=${ownerProfile.email} subject="${subject}"`)
 
       try {
         await sendEmail({
@@ -233,7 +213,6 @@ export async function GET(request: Request) {
           subject,
           html,
           text,
-          ...(pdfBuffer ? { attachments: [{ filename, content: pdfBuffer }] } : {}),
         })
         console.log(`${ctx} ✓ sendEmail OK`)
       } catch (emailErr) {
