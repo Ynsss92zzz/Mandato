@@ -99,6 +99,39 @@ export async function GET(request: NextRequest) {
   }
   console.log('[sequences cron] from addresses:', Object.fromEntries(agencyFromMap))
 
+  // DIAGNOSTIC: dump all steps for sequences being processed so we can verify step_order and channel
+  {
+    const seqIds = [...new Set(enrollments.map(e => e.sequence_id))]
+    const { data: allSteps, error: stepsErr } = await supabase
+      .from('sequence_steps')
+      .select('sequence_id, step_order, channel, delay_hours')
+      .in('sequence_id', seqIds)
+      .order('step_order')
+
+    if (stepsErr) {
+      console.error('[sequences cron] ⚠ steps diagnostic fetch error:', stepsErr.message)
+    } else {
+      console.log('[sequences cron] steps in DB for these sequences:', JSON.stringify(
+        (allSteps ?? []).map(s => ({
+          seq: s.sequence_id.slice(0, 8),
+          order: s.step_order,
+          channel: s.channel,           // raw value — check for typos/case/whitespace
+          channel_json: JSON.stringify(s.channel), // reveals invisible chars
+          delay: `${s.delay_hours}h`,
+        }))
+      ))
+    }
+
+    console.log('[sequences cron] enrollments → expected step_orders:', JSON.stringify(
+      enrollments.map(e => ({
+        enr: e.id.slice(0, 8),
+        seq: e.sequence_id.slice(0, 8),
+        current_step: e.current_step,
+        will_seek_order: e.current_step + 1,
+      }))
+    ))
+  }
+
   let processed = 0
   let skipped = 0
   let failed = 0
@@ -208,6 +241,8 @@ export async function GET(request: NextRequest) {
       // Send via appropriate channel
       let messageSent = false
       let sendSkipReason: string | null = null
+
+      console.log(`${ctx} channel raw value: ${JSON.stringify(step.channel)} | email=${lead.email ?? 'null'} | phone=${lead.phone ?? 'null'}`)
 
       try {
         if (step.channel === 'email') {
