@@ -50,17 +50,34 @@ export async function GET(request: Request) {
     try {
       console.log(`${ctx} ── processing`)
 
-      const { data: members, error: membersErr } = await supabase
+      const { data: memberRow, error: membersErr } = await supabase
         .from('agency_members')
-        .select('role, profiles(email, full_name)')
+        .select('profile_id')
         .eq('agency_id', agency.id)
         .eq('role', 'owner')
+        .single()
 
       if (membersErr) {
         console.error(`${ctx} ⚠ members fetch error:`, membersErr.message)
       }
 
-      const ownerProfile = (members?.[0]?.profiles) as { email: string; full_name: string | null } | null
+      if (!memberRow?.profile_id) {
+        console.warn(`${ctx} ⚠ no owner member found — skipping`)
+        skipped++
+        continue
+      }
+
+      const { data: profileRow, error: profileErr } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', memberRow.profile_id)
+        .single()
+
+      if (profileErr) {
+        console.error(`${ctx} ⚠ profile fetch error:`, profileErr.message)
+      }
+
+      const ownerProfile = profileRow as { email: string; full_name: string | null } | null
       console.log(`${ctx} owner profile: ${ownerProfile ? `"${ownerProfile.full_name}" <${ownerProfile.email}>` : '(none found)'}`)
 
       if (!ownerProfile?.email) {
