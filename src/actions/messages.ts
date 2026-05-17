@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { sendEmail, buildAgentFromAddress } from '@/lib/resend'
+import { sendEmail, buildAgencyFromAddress } from '@/lib/resend'
 import { sendSMS, sendWhatsApp } from '@/lib/twilio'
 import type { MessageChannel } from '@/types'
 
@@ -35,13 +35,13 @@ export async function sendMessage({
   const agencyId = await getAgencyId(supabase, user.id)
   if (!agencyId) return { error: 'Agence introuvable' }
 
-  // Fetch sender's full name for the email From header
-  const { data: senderProfile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
+  // Fetch agency name for the email From header
+  const { data: agencyRow } = await supabase
+    .from('agencies')
+    .select('name')
+    .eq('id', agencyId)
     .single()
-  const emailFrom = buildAgentFromAddress(senderProfile?.full_name)
+  const emailFrom = buildAgencyFromAddress(agencyRow?.name)
 
   if (!content.trim()) return { error: 'Le message ne peut pas être vide' }
 

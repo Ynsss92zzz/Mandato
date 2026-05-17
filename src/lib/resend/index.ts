@@ -8,24 +8,18 @@ const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@mandato.fr'
 const AGENT_DOMAIN = 'withmandato.com'
 
 /**
- * Builds a "Display Name <local@withmandato.com>" from address for an agent.
- * "Jean Dupont" → "Jean Dupont <jean.dupont@withmandato.com>"
- * null / empty  → "Mandato <contact@withmandato.com>"
+ * Builds a "Agency Name <noreply@withmandato.com>" from address.
+ * "Dupont Immobilier" → "Dupont Immobilier <noreply@withmandato.com>"
+ * null / empty        → "Mandato <noreply@withmandato.com>"
  */
+export function buildAgencyFromAddress(agencyName: string | null | undefined): string {
+  const display = agencyName?.trim() || 'Mandato'
+  return `${display} <noreply@${AGENT_DOMAIN}>`
+}
+
+/** @deprecated Use buildAgencyFromAddress instead */
 export function buildAgentFromAddress(fullName: string | null | undefined): string {
-  const fallback = `Mandato <contact@${AGENT_DOMAIN}>`
-  if (!fullName?.trim()) return fallback
-
-  const normalize = (s: string) =>
-    s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '')
-
-  const parts = fullName.trim().split(/\s+/)
-  const first = normalize(parts[0])
-  const last = parts.length > 1 ? normalize(parts[parts.length - 1]) : ''
-  const local = last ? `${first}.${last}` : first
-
-  if (!local) return fallback
-  return `${fullName.trim()} <${local}@${AGENT_DOMAIN}>`
+  return buildAgencyFromAddress(fullName)
 }
 
 export async function sendEmail({

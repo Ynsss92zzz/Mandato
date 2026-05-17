@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { sendEmail, buildAgentFromAddress } from '@/lib/resend'
+import { sendEmail, buildAgencyFromAddress } from '@/lib/resend'
 import { sendSMS, sendWhatsApp, formatE164FR } from '@/lib/twilio'
 
 export const runtime = 'nodejs'
@@ -82,20 +82,19 @@ export async function GET(request: NextRequest) {
   console.log('[sequences cron] processing IDs:', enrollments.map(e => e.id.slice(0, 8)).join(', '))
   console.log('[sequences cron] first enrollment (raw):', JSON.stringify(enrollments[0]))
 
-  // Build agencyId → "Name <local@withmandato.com>" map for email From header
+  // Build agencyId → "Agency Name <noreply@withmandato.com>" map for email From header
   const agencyIds = [...new Set(enrollments.map(e => e.agency_id))]
-  const { data: ownerMembers, error: ownerErr } = await supabase
-    .from('agency_members')
-    .select('agency_id, profiles(full_name)')
-    .in('agency_id', agencyIds)
-    .eq('role', 'owner')
+  const { data: agencies, error: agencyErr } = await supabase
+    .from('agencies')
+    .select('id, name')
+    .in('id', agencyIds)
 
-  if (ownerErr) console.error('[sequences cron] owner fetch error:', ownerErr.message)
+  if (agencyErr) console.error('[sequences cron] agency fetch error:', agencyErr.message)
 
   const agencyFromMap = new Map<string, string>()
-  for (const m of (ownerMembers ?? [])) {
-    const profile = (m as unknown as { agency_id: string; profiles: { full_name: string | null } | null })
-    agencyFromMap.set(profile.agency_id, buildAgentFromAddress(profile.profiles?.full_name))
+  for (const a of (agencies ?? [])) {
+    const agency = a as unknown as { id: string; name: string | null }
+    agencyFromMap.set(agency.id, buildAgencyFromAddress(agency.name))
   }
   console.log('[sequences cron] from addresses:', Object.fromEntries(agencyFromMap))
 
