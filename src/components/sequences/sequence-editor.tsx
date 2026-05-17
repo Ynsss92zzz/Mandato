@@ -39,14 +39,14 @@ export interface MessageTemplate {
 const CHANNEL_ICONS: Record<MessageChannel, string> = {
   email: '✉️',
   sms: '💬',
-  whatsapp: '📱',
+  whatsapp: '💬',
   note: '📝',
 }
 
 const CHANNEL_LABELS: Record<MessageChannel, string> = {
   email: 'Email',
   sms: 'SMS',
-  whatsapp: 'WhatsApp',
+  whatsapp: 'SMS',
   note: 'Note',
 }
 

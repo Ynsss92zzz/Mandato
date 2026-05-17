@@ -5,9 +5,9 @@ import type { MessageChannel } from '@/types'
 import type { StepDraft } from '@/actions/sequences'
 import type { MessageTemplate } from './sequence-editor'
 
-const CHANNELS: { value: MessageChannel; label: string; icon: string }[] = [
+const CHANNELS: { value: MessageChannel; label: string; icon: string; soon?: boolean }[] = [
   { value: 'email', label: 'Email', icon: '✉️' },
-  { value: 'sms', label: 'SMS', icon: '💬' },
+  { value: 'sms', label: 'SMS', icon: '💬', soon: true },
   { value: 'note', label: 'Note interne', icon: '📝' },
 ]
 
@@ -78,20 +78,28 @@ export function StepModal({ step, templates = [], onSave, onClose }: StepModalPr
           {/* Canal */}
           <div>
             <label className="block text-xs font-medium text-zinc-600 mb-2">Canal d&apos;envoi</label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {CHANNELS.map((c) => (
                 <button
                   key={c.value}
                   type="button"
-                  onClick={() => setChannel(c.value)}
-                  className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 text-xs font-medium transition-colors ${
-                    channel === c.value
-                      ? 'border-[#FF6B35] bg-[#FF6B35]/5 text-[#FF6B35]'
-                      : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                  onClick={() => !c.soon && setChannel(c.value)}
+                  disabled={c.soon}
+                  className={`relative flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 text-xs font-medium transition-colors ${
+                    c.soon
+                      ? 'border-zinc-100 bg-zinc-50 text-zinc-300 cursor-not-allowed'
+                      : channel === c.value
+                        ? 'border-[#FF6B35] bg-[#FF6B35]/5 text-[#FF6B35]'
+                        : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
                   }`}
                 >
                   <span className="text-lg">{c.icon}</span>
                   {c.label}
+                  {c.soon && (
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-zinc-200 text-zinc-500 text-[9px] font-semibold px-1.5 py-0.5 rounded-full">
+                      Bientôt
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
