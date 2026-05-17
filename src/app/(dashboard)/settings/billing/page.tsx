@@ -27,7 +27,7 @@ const PLAN_FEATURES: Record<PlanId, string[]> = {
     '80 leads / mois',
     '3 utilisateurs',
     'Qualification IA automatique',
-    'Séquences email + SMS',
+    'Relances email automatiques',
     'Leads chauds identifiés par IA',
     'Briefing matinal quotidien',
     'Fiche avant visite automatisée',
@@ -48,8 +48,7 @@ const PLAN_FEATURES: Record<PlanId, string[]> = {
 const COMPARISON_FEATURES = [
   { key: 'leads_per_month',    label: 'Leads / mois',          format: (v: number) => v === Infinity ? 'Illimités' : String(v) },
   { key: 'agents',             label: 'Utilisateurs',           format: (v: number) => v === Infinity ? 'Illimités' : String(v) },
-  { key: 'sms',                label: 'SMS',                    format: null },
-  { key: 'hot_leads',          label: 'Leads chauds IA',        format: null },
+{ key: 'hot_leads',          label: 'Leads chauds IA',        format: null },
   { key: 'morning_briefing',   label: 'Briefing matinal',       format: null },
   { key: 'pre_visit_sheet',    label: 'Fiche avant visite',     format: null },
   { key: 'advanced_analytics', label: 'Analytics avancés',      format: null },

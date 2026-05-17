@@ -15,7 +15,7 @@ const PLAN_FEATURES = {
     '80 leads/mois',
     '3 utilisateurs',
     'Qualification IA automatique',
-    'Séquences email + SMS',
+    'Relances email automatiques',
     'Leads chauds identifiés par IA',
     'Briefing matinal quotidien',
     'Fiche avant visite automatisée',

@@ -289,7 +289,7 @@ function Pricing() {
     pro: [
       'Leads illimités',
       'Qualification IA',
-      'Email + SMS + WhatsApp',
+      'Relances email automatiques',
       'Widget embed avancé',
       'Prise de RDV Cal.com',
       'Support prioritaire',
@@ -297,7 +297,7 @@ function Pricing() {
     agence: [
       'Leads illimités',
       'Qualification IA',
-      'Email + SMS + WhatsApp',
+      'Relances email automatiques',
       'Multi-agents (équipe)',
       'Analytics avancés',
       'Rapports PDF automatiques',
