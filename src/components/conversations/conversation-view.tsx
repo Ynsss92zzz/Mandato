@@ -62,22 +62,27 @@ function MessageBubble({ message }: { message: Message }) {
 
   return (
     <div className={`flex mb-3 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
+      {!isOutbound && (
+        <div className="w-7 h-7 rounded-full bg-[#FF6B35]/15 flex items-center justify-center flex-none mr-2 mt-0.5 self-end">
+          <span className="text-[10px] font-bold text-[#FF6B35]">L</span>
+        </div>
+      )}
       <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
         isOutbound
           ? 'bg-[#1B2B4B] text-white rounded-br-sm'
-          : 'bg-white border border-zinc-200 text-[#1B2B4B] rounded-bl-sm'
+          : 'bg-[#FF6B35] text-white rounded-bl-sm'
       }`}>
         {message.subject && (
-          <p className={`text-xs font-semibold mb-1 ${isOutbound ? 'text-white/70' : 'text-zinc-500'}`}>
+          <p className="text-xs font-semibold mb-1 text-white/70">
             {message.subject}
           </p>
         )}
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
         <div className={`flex items-center gap-1.5 mt-1 ${isOutbound ? 'justify-end' : ''}`}>
           {message.is_ai_generated && (
-            <span className={`text-xs font-medium ${isOutbound ? 'text-white/50' : 'text-[#FF6B35]'}`}>✦ IA</span>
+            <span className="text-xs font-medium text-white/50">✦ IA</span>
           )}
-          <span className={`text-xs ${isOutbound ? 'text-white/50' : 'text-zinc-400'}`}>
+          <span className="text-xs text-white/50">
             {new Date(message.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
