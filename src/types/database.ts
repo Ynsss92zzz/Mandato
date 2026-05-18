@@ -80,6 +80,7 @@ export interface Database {
           updated_at?: string
         }
         Update: {
+          email?: string
           full_name?: string | null
           avatar_url?: string | null
           onboarding_completed?: boolean

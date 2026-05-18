@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   if (tokenHash && type) {
     const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
     if (!error && data.user) {
-      if (type === 'email_change') {
+      if (type === 'email_change' && data.user.email) {
         // auth.users.email is now updated — sync profiles.email so the settings page reflects it
         const admin = createAdminClient()
         await admin
