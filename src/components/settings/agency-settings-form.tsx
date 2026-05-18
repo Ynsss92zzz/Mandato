@@ -205,8 +205,7 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
     })
   }
 
-  function handleEmailChange(e: React.FormEvent) {
-    e.preventDefault()
+  function handleEmailChange() {
     setEmailChangeError(null)
     setEmailChangeSuccess(null)
     const trimmed = newEmail.trim()
@@ -420,17 +419,19 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
                   {emailChangeError}
                 </div>
               )}
-              <form onSubmit={handleEmailChange} className="flex gap-2">
+              <div className="flex gap-2">
                 <input
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleEmailChange() } }}
                   placeholder="nouvelle@adresse.fr"
                   autoFocus
                   className="flex-1 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-[#1B2B4B]/20 focus:border-[#1B2B4B]"
                 />
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleEmailChange}
                   disabled={emailChangePending}
                   className="inline-flex items-center gap-2 bg-[#1B2B4B] hover:bg-[#2D4270] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
                 >
@@ -440,7 +441,7 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
                     'Confirmer'
                   )}
                 </button>
-              </form>
+              </div>
               <p className="text-xs text-zinc-400">Un email de confirmation vous sera envoyé. L&apos;adresse ne changera qu&apos;après avoir cliqué sur le lien.</p>
             </div>
           )}

@@ -421,6 +421,20 @@ export async function GET(request: NextRequest) {
           .from('conversations')
           .update({ last_message_at: sentAt })
           .eq('id', conversationId)
+
+        // Move lead from nouveau → contacte on first real outbound contact (not notes)
+        if (step.channel !== 'note') {
+          const { error: leadStatusErr } = await supabase
+            .from('leads')
+            .update({ status: 'contacte' })
+            .eq('id', enrollment.lead_id)
+            .eq('status', 'nouveau')
+          if (leadStatusErr) {
+            console.error(`${ctx} ⚠ lead status update error:`, leadStatusErr.message)
+          } else {
+            console.log(`${ctx} ✓ lead status updated nouveau → contacte`)
+          }
+        }
       }
 
       // Advance enrollment to next step or mark complete
