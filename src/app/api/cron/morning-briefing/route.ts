@@ -9,99 +9,151 @@ const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR',
 export async function GET(request: Request) {
   const auth = request.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    console.error('[morning-briefing] Unauthorized — received:', auth?.slice(0, 20) ?? '(none)')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  console.log('[morning-briefing] ═══ START ═══')
+  console.log('[morning-briefing] env — RESEND_API_KEY:', process.env.RESEND_API_KEY ? `set (${process.env.RESEND_API_KEY.slice(0, 8)}…)` : '⚠ MISSING')
 
   const supabase = createAdminClient()
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString()
+  const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.mandato.fr'
 
-  const { data: agencies } = await supabase.from('agencies').select('id, name')
+  console.log('[morning-briefing] date range — today:', todayStart, '→', todayEnd)
+
+  const { data: agencies, error: agencyErr } = await supabase.from('agencies').select('id, name')
+  if (agencyErr) {
+    console.error('[morning-briefing] ⚠ agencies fetch error:', agencyErr.message)
+    return NextResponse.json({ error: agencyErr.message }, { status: 500 })
+  }
+  console.log('[morning-briefing] agencies found:', agencies?.length ?? 0,
+    agencies?.map(a => `${a.id.slice(0, 8)} "${a.name}"`).join(', '))
+
+  if (!agencies || agencies.length === 0) {
+    console.log('[morning-briefing] ═══ END (no agencies) ═══')
+    return NextResponse.json({ success: true, sent: 0 })
+  }
+
   let sent = 0
+  let skipped = 0
+  let failed = 0
 
-  for (const agency of agencies ?? []) {
-    const { data: members } = await supabase
-      .from('agency_members')
-      .select('role, profiles(email, full_name)')
-      .eq('agency_id', agency.id)
-      .eq('role', 'owner')
+  for (const agency of agencies) {
+    const ctx = `[agency=${agency.id.slice(0, 8)} "${agency.name}"]`
+    try {
+      console.log(`${ctx} ── processing`)
 
-    const owner = (members?.[0]?.profiles) as { email: string; full_name: string | null } | null
-    if (!owner?.email) continue
+      // Two-query approach to avoid ambiguous FK join on agency_members → profiles
+      const { data: memberRow, error: memberErr } = await supabase
+        .from('agency_members')
+        .select('profile_id')
+        .eq('agency_id', agency.id)
+        .eq('role', 'owner')
+        .single()
 
-    const firstName = owner.full_name?.split(' ')[0] ?? 'Agent'
+      if (memberErr) console.error(`${ctx} ⚠ member fetch error:`, memberErr.message)
 
-    // Today's appointments
-    const { data: todayAppts } = await supabase
-      .from('appointments')
-      .select('title, scheduled_at, lead_id')
-      .eq('agency_id', agency.id)
-      .gte('scheduled_at', todayStart)
-      .lt('scheduled_at', todayEnd)
-      .neq('status', 'annule')
-      .order('scheduled_at', { ascending: true })
+      if (!memberRow?.profile_id) {
+        console.warn(`${ctx} ⚠ no owner member — skipping`)
+        skipped++
+        continue
+      }
 
-    // Lead names for appointments
-    const apptLeadIds = (todayAppts ?? []).map(a => a.lead_id).filter(Boolean) as string[]
-    const leadNameMap: Record<string, string> = {}
-    if (apptLeadIds.length > 0) {
-      const { data: apptLeads } = await supabase
-        .from('leads').select('id, first_name, last_name').in('id', apptLeadIds)
-      ;(apptLeads ?? []).forEach(l => {
-        leadNameMap[l.id] = [l.first_name, l.last_name].filter(Boolean).join(' ')
-      })
-    }
+      const { data: profileRow, error: profileErr } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', memberRow.profile_id)
+        .single()
 
-    // Hot leads (score > 7, still active)
-    const { data: hotLeads } = await supabase
-      .from('leads')
-      .select('first_name, last_name, phone, budget, ai_score')
-      .eq('agency_id', agency.id)
-      .gt('ai_score', 7)
-      .in('status', ['nouveau', 'contacte', 'qualifie', 'rdv_planifie', 'proposition'])
-      .order('ai_score', { ascending: false })
-      .limit(5)
+      if (profileErr) console.error(`${ctx} ⚠ profile fetch error:`, profileErr.message)
 
-    // Leads pending follow-up
-    const { count: pendingCount } = await supabase
-      .from('leads')
-      .select('id', { count: 'exact', head: true })
-      .eq('agency_id', agency.id)
-      .in('status', ['nouveau', 'contacte'])
-      .or(`last_contacted_at.is.null,last_contacted_at.lte.${sevenDaysAgo}`)
+      const owner = profileRow as { email: string; full_name: string | null } | null
+      console.log(`${ctx} owner: ${owner ? `"${owner.full_name}" <${owner.email}>` : '(none found)'}`)
 
-    // Potential commission from hot leads
-    const hotBudgets = (hotLeads ?? []).map(l => l.budget ?? 0).filter(b => b > 0)
-    const potentialCommission = hotBudgets.reduce((sum, b) => sum + b * 0.02, 0)
+      if (!owner?.email) {
+        console.warn(`${ctx} ⚠ no owner email — skipping`)
+        skipped++
+        continue
+      }
 
-    // Build HTML sections
-    const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+      const firstName = owner.full_name?.split(' ')[0] ?? 'Agent'
 
-    const apptRows = (todayAppts ?? []).length > 0
-      ? (todayAppts ?? []).map(a => {
-          const time = new Date(a.scheduled_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-          const clientName = a.lead_id ? (leadNameMap[a.lead_id] ?? a.title) : a.title
-          return `<li style="margin-bottom:10px;padding:10px 14px;background:#f8fafc;border-radius:8px;font-size:14px;color:#1B2B4B">
-            ⏰ <strong>${time}</strong> — ${clientName}
-          </li>`
-        }).join('')
-      : `<li style="color:#94a3b8;font-size:14px;padding:10px 0">Aucun rendez-vous aujourd'hui</li>`
+      // Today's appointments
+      const { data: todayAppts, error: apptErr } = await supabase
+        .from('appointments')
+        .select('title, scheduled_at, lead_id')
+        .eq('agency_id', agency.id)
+        .gte('scheduled_at', todayStart)
+        .lt('scheduled_at', todayEnd)
+        .neq('status', 'annule')
+        .order('scheduled_at', { ascending: true })
+      if (apptErr) console.error(`${ctx} ⚠ appointments error:`, apptErr.message)
 
-    const hotRows = (hotLeads ?? []).length > 0
-      ? (hotLeads ?? []).map(l => {
-          const name = [l.first_name, l.last_name].filter(Boolean).join(' ')
-          const budget = l.budget ? fmt.format(l.budget) : 'budget N/A'
-          const phone = l.phone ? ` — 📱 ${l.phone}` : ''
-          return `<li style="margin-bottom:10px;padding:10px 14px;background:#fff4f0;border:1px solid #ffdecc;border-radius:8px;font-size:14px;color:#1B2B4B">
-            🔥 <strong>${name}</strong> — Score <strong>${l.ai_score}/10</strong> — ${budget}${phone}
-          </li>`
-        }).join('')
-      : `<li style="color:#94a3b8;font-size:14px;padding:10px 0">Aucun lead chaud en ce moment</li>`
+      // Lead names for appointments
+      const apptLeadIds = (todayAppts ?? []).map(a => a.lead_id).filter(Boolean) as string[]
+      const leadNameMap: Record<string, string> = {}
+      if (apptLeadIds.length > 0) {
+        const { data: apptLeads } = await supabase
+          .from('leads').select('id, first_name, last_name').in('id', apptLeadIds)
+        ;(apptLeads ?? []).forEach(l => {
+          leadNameMap[l.id] = [l.first_name, l.last_name].filter(Boolean).join(' ')
+        })
+      }
 
-    const html = `
+      // Hot leads (score > 7, still active)
+      const { data: hotLeads, error: hotErr } = await supabase
+        .from('leads')
+        .select('first_name, last_name, phone, budget, ai_score')
+        .eq('agency_id', agency.id)
+        .gt('ai_score', 7)
+        .in('status', ['nouveau', 'contacte', 'qualifie', 'rdv_planifie', 'proposition'])
+        .order('ai_score', { ascending: false })
+        .limit(5)
+      if (hotErr) console.error(`${ctx} ⚠ hot leads error:`, hotErr.message)
+
+      // Leads pending follow-up
+      const { count: pendingCount, error: pendingErr } = await supabase
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('agency_id', agency.id)
+        .in('status', ['nouveau', 'contacte'])
+        .or(`last_contacted_at.is.null,last_contacted_at.lte.${sevenDaysAgo}`)
+      if (pendingErr) console.error(`${ctx} ⚠ pending leads error:`, pendingErr.message)
+
+      console.log(`${ctx} stats — appts=${todayAppts?.length ?? 0} hot=${hotLeads?.length ?? 0} pending=${pendingCount ?? 0}`)
+
+      // Potential commission from hot leads
+      const hotBudgets = (hotLeads ?? []).map(l => l.budget ?? 0).filter(b => b > 0)
+      const potentialCommission = hotBudgets.reduce((sum, b) => sum + b * 0.02, 0)
+
+      const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+
+      const apptRows = (todayAppts ?? []).length > 0
+        ? (todayAppts ?? []).map(a => {
+            const time = new Date(a.scheduled_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+            const clientName = a.lead_id ? (leadNameMap[a.lead_id] ?? a.title) : a.title
+            return `<li style="margin-bottom:10px;padding:10px 14px;background:#f8fafc;border-radius:8px;font-size:14px;color:#1B2B4B">
+              ⏰ <strong>${time}</strong> — ${clientName}
+            </li>`
+          }).join('')
+        : `<li style="color:#94a3b8;font-size:14px;padding:10px 0">Aucun rendez-vous aujourd'hui</li>`
+
+      const hotRows = (hotLeads ?? []).length > 0
+        ? (hotLeads ?? []).map(l => {
+            const name = [l.first_name, l.last_name].filter(Boolean).join(' ')
+            const budget = l.budget ? fmt.format(l.budget) : 'budget N/A'
+            const phone = l.phone ? ` — 📱 ${l.phone}` : ''
+            return `<li style="margin-bottom:10px;padding:10px 14px;background:#fff4f0;border:1px solid #ffdecc;border-radius:8px;font-size:14px;color:#1B2B4B">
+              🔥 <strong>${name}</strong> — Score <strong>${l.ai_score}/10</strong> — ${budget}${phone}
+            </li>`
+          }).join('')
+        : `<li style="color:#94a3b8;font-size:14px;padding:10px 0">Aucun lead chaud en ce moment</li>`
+
+      const html = `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#f8fafc">
   <div style="background:#1B2B4B;padding:32px 40px;text-align:center">
     <span style="color:white;font-size:24px;font-weight:700;letter-spacing:-0.5px">Mandato</span>
@@ -144,14 +196,36 @@ export async function GET(request: Request) {
   </div>
 </div>`
 
-    await sendEmail({
-      to: owner.email,
-      subject: `☀️ Votre briefing Mandato — ${dateStr}`,
-      html,
-      text: `Bonjour ${firstName} ! RDV aujourd'hui : ${(todayAppts ?? []).length}. Leads chauds : ${(hotLeads ?? []).length}. En attente de relance : ${pendingCount ?? 0}. Commission potentielle : ${potentialCommission > 0 ? fmt.format(potentialCommission) : '—'}.`,
-    })
-    sent++
+      const subject = `☀️ Votre briefing Mandato — ${dateStr}`
+      console.log(`${ctx} → sendEmail to=${owner.email} subject="${subject}"`)
+
+      try {
+        await sendEmail({
+          to: owner.email,
+          subject,
+          html,
+          text: `Bonjour ${firstName} ! RDV aujourd'hui : ${(todayAppts ?? []).length}. Leads chauds : ${(hotLeads ?? []).length}. En attente de relance : ${pendingCount ?? 0}. Commission potentielle : ${potentialCommission > 0 ? fmt.format(potentialCommission) : '—'}.`,
+        })
+        console.log(`${ctx} ✓ sendEmail OK`)
+        sent++
+      } catch (emailErr) {
+        const e = emailErr as Record<string, unknown>
+        console.error(
+          `${ctx} ⚠ sendEmail FAILED —`,
+          `name: ${e?.name ?? '?'}`,
+          `| message: ${e?.message ?? '?'}`,
+          `| statusCode: ${e?.statusCode ?? e?.status ?? '?'}`,
+          `| body: ${JSON.stringify(e?.response ?? e?.body ?? e?.data ?? '(no body)')}`,
+        )
+        failed++
+      }
+    } catch (err) {
+      const e = err as Record<string, unknown>
+      console.error(`${ctx} ⚠ unexpected error — ${e?.message ?? JSON.stringify(err)}`)
+      failed++
+    }
   }
 
-  return NextResponse.json({ success: true, sent })
+  console.log(`[morning-briefing] ═══ END — sent=${sent} skipped=${skipped} failed=${failed} ═══`)
+  return NextResponse.json({ success: true, sent, skipped, failed })
 }
