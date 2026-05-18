@@ -19,6 +19,9 @@ export interface Database {
           phone: string | null
           address: string | null
           referral_code: string | null
+          notif_morning_briefing: boolean
+          notif_weekly_report: boolean
+          notif_hot_leads: boolean
           created_at: string
           updated_at: string
         }
@@ -33,6 +36,9 @@ export interface Database {
           phone?: string | null
           address?: string | null
           referral_code?: string | null
+          notif_morning_briefing?: boolean
+          notif_weekly_report?: boolean
+          notif_hot_leads?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -47,6 +53,9 @@ export interface Database {
           phone?: string | null
           address?: string | null
           referral_code?: string | null
+          notif_morning_briefing?: boolean
+          notif_weekly_report?: boolean
+          notif_hot_leads?: boolean
           updated_at?: string
         }
         Relationships: []
