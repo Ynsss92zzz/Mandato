@@ -5,16 +5,15 @@ console.log('[resend] init — key:', apiKey ? `${apiKey.slice(0, 8)}…` : '(un
 
 const resend = new Resend(apiKey)
 const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@mandato.fr'
-const AGENT_DOMAIN = 'withmandato.com'
 
 /**
- * Builds a "Agency Name <noreply@withmandato.com>" from address.
- * "Dupont Immobilier" → "Dupont Immobilier <noreply@withmandato.com>"
- * null / empty        → "Mandato <noreply@withmandato.com>"
+ * Builds a "Agency Name <noreply@mandato.fr>" from address using the verified sending domain.
+ * "Dupont Immobilier" → "Dupont Immobilier <noreply@mandato.fr>"
+ * null / empty        → "Mandato <noreply@mandato.fr>"
  */
 export function buildAgencyFromAddress(agencyName: string | null | undefined): string {
   const display = agencyName?.trim() || 'Mandato'
-  return `${display} <noreply@${AGENT_DOMAIN}>`
+  return `${display} <${DEFAULT_FROM}>`
 }
 
 /** @deprecated Use buildAgencyFromAddress instead */
