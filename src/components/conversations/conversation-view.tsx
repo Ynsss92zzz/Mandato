@@ -17,6 +17,7 @@ interface ConversationSummary {
   leadName: string
   leadEmail: string | null
   leadPhone: string | null
+  messageCount: number
 }
 
 const CHANNEL_ICONS: Record<MessageChannel, string> = {
@@ -99,6 +100,7 @@ function ConversationThread({
 }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [content, setContent] = useState('')
   const [subject, setSubject] = useState('')
   const [sendError, setSendError] = useState<string | null>(null)
@@ -111,6 +113,7 @@ function ConversationThread({
     let mounted = true
     setLoading(true)
     setMessages([])
+    setFetchError(null)
     const supabase = createClient()
 
     // Initial fetch
@@ -121,7 +124,13 @@ function ConversationThread({
       .order('created_at', { ascending: true })
       .then(({ data, error }) => {
         if (!mounted) return
-        if (error) console.error('[ConversationThread] fetch error:', error.message, error.code)
+        if (error) {
+          console.error('[ConversationThread] fetch error:', error.message, error.code)
+          setFetchError(`${error.message} (${error.code})`)
+          setLoading(false)
+          return
+        }
+        console.log('[ConversationThread] fetched', data?.length ?? 0, 'messages for conv', conversation.id)
         setMessages(data ?? [])
         setLoading(false)
       })
@@ -200,9 +209,17 @@ function ConversationThread({
             <div className="w-5 h-5 border-2 border-zinc-200 border-t-[#1B2B4B] rounded-full animate-spin" />
           </div>
         )}
-        {!loading && messages.length === 0 && (
+        {!loading && fetchError && (
+          <div className="mx-2 my-4 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+            <p className="text-xs font-semibold text-red-600 mb-0.5">Erreur de chargement</p>
+            <p className="text-xs text-red-500 font-mono">{fetchError}</p>
+            <p className="text-xs text-red-400 mt-1">Vérifiez la console navigateur et les logs Vercel.</p>
+          </div>
+        )}
+        {!loading && !fetchError && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-32 text-center">
             <p className="text-sm text-zinc-400">Aucun message dans cette conversation</p>
+            <p className="text-xs text-zinc-300 mt-1">Les messages des séquences apparaissent ici après envoi</p>
           </div>
         )}
         {!loading && messages.map((msg) => (
@@ -342,7 +359,10 @@ export function ConversationView({ conversations: initialConversations }: { conv
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-[#1B2B4B] truncate">{conv.leadName}</p>
                     <p className="text-xs text-zinc-400 truncate">
-                      {conv.leadEmail ?? conv.leadPhone ?? CHANNEL_LABELS[conv.channel]}
+                      {CHANNEL_LABELS[conv.channel]}
+                      {conv.messageCount > 0
+                        ? ` · ${conv.messageCount} msg`
+                        : ' · vide'}
                     </p>
                   </div>
                 </div>

@@ -8,11 +8,33 @@ export const metadata: Metadata = { title: 'Conversations — Mandato' }
 export default async function ConversationsPage() {
   const supabase = await createClient()
 
+  // Verify session — helps diagnose RLS failures
+  const { data: { user } } = await supabase.auth.getUser()
+  console.log('[conversations page] user:', user?.id ?? '(none — not authenticated)')
+
   // Fetch conversations with lead info
-  const { data: conversations } = await supabase
+  const { data: conversations, error: convErr } = await supabase
     .from('conversations')
     .select('id, lead_id, channel, last_message_at, agency_id')
     .order('last_message_at', { ascending: false })
+
+  console.log('[conversations page] conversations query —',
+    'count:', conversations?.length ?? 0,
+    '| error:', convErr?.message ?? 'none',
+    '| user_id:', user?.id?.slice(0, 8) ?? '(none)',
+  )
+
+  if (convErr) {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold text-[#1B2B4B] mb-6">Conversations</h1>
+        <div className="bg-white rounded-xl border border-red-100 px-6 py-10 text-center">
+          <p className="text-sm font-semibold text-red-600 mb-1">Erreur de chargement</p>
+          <p className="text-xs text-red-400 font-mono">{convErr.message}</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!conversations || conversations.length === 0) {
     return (
@@ -31,16 +53,31 @@ export default async function ConversationsPage() {
     )
   }
 
-  // Fetch lead info for each conversation
-  const leadIds = [...new Set(conversations.map((c) => c.lead_id))]
-  const { data: leads } = await supabase
-    .from('leads')
-    .select('id, first_name, last_name, email, phone')
-    .in('id', leadIds)
+  // Fetch lead info + message counts for each conversation
+  const convIds  = conversations.map((c) => c.id)
+  const leadIds  = [...new Set(conversations.map((c) => c.lead_id))]
 
-  const leadMap = Object.fromEntries(
-    (leads ?? []).map((l) => [l.id, l])
-  )
+  const [{ data: leads }, { data: msgCounts }] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('id, first_name, last_name, email, phone')
+      .in('id', leadIds),
+    // Count messages per conversation via a select with count
+    supabase
+      .from('messages')
+      .select('conversation_id')
+      .in('conversation_id', convIds),
+  ])
+
+  const leadMap = Object.fromEntries((leads ?? []).map((l) => [l.id, l]))
+
+  // Build message count map
+  const msgCountMap: Record<string, number> = {}
+  for (const m of (msgCounts ?? [])) {
+    msgCountMap[m.conversation_id] = (msgCountMap[m.conversation_id] ?? 0) + 1
+  }
+
+  console.log('[conversations page] msg count map:', JSON.stringify(msgCountMap))
 
   const enriched = conversations.map((conv) => {
     const lead = leadMap[conv.lead_id]
@@ -52,6 +89,7 @@ export default async function ConversationsPage() {
       leadName: lead ? `${lead.first_name} ${lead.last_name ?? ''}`.trim() : 'Lead inconnu',
       leadEmail: lead?.email ?? null,
       leadPhone: lead?.phone ?? null,
+      messageCount: msgCountMap[conv.id] ?? 0,
     }
   })
 
