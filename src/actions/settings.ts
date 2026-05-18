@@ -36,6 +36,33 @@ export async function updateAgencySettings(formData: FormData): Promise<{ error?
   return null
 }
 
+export async function updateNotificationPreferences(formData: FormData): Promise<{ error?: string } | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { data: member } = await supabase
+    .from('agency_members')
+    .select('agency_id')
+    .eq('profile_id', user.id)
+    .single()
+
+  if (!member) return { error: 'Agence introuvable' }
+
+  const { error } = await supabase
+    .from('agencies')
+    .update({
+      notif_morning_briefing: formData.get('notif_morning_briefing') === 'true',
+      notif_weekly_report:    formData.get('notif_weekly_report')    === 'true',
+      notif_hot_leads:        formData.get('notif_hot_leads')        === 'true',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', member.agency_id)
+
+  if (error) return { error: error.message }
+  return null
+}
+
 export async function updateProfileSettings(formData: FormData): Promise<{ error?: string } | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

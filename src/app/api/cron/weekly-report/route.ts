@@ -28,7 +28,9 @@ export async function GET(request: Request) {
   const weekEndISO = weekEnd.toISOString().slice(0, 10)
   console.log('[weekly-report] week:', weekStartISO, '→', weekEndISO)
 
-  const { data: agencies, error: agencyErr } = await supabase.from('agencies').select('id, name')
+  const { data: agencies, error: agencyErr } = await supabase
+    .from('agencies')
+    .select('id, name, notif_weekly_report')
   if (agencyErr) {
     console.error('[weekly-report] ⚠ agencies fetch error — code:', agencyErr.code, '| message:', agencyErr.message)
     return NextResponse.json({ error: agencyErr.message }, { status: 500 })
@@ -81,6 +83,12 @@ export async function GET(request: Request) {
 
       if (!ownerProfile?.email) {
         console.warn(`${ctx} ⚠ no owner email — skipping`)
+        skipped++
+        continue
+      }
+
+      if (agency.notif_weekly_report === false) {
+        console.log(`${ctx} notif_weekly_report=false — skipping`)
         skipped++
         continue
       }

@@ -25,7 +25,9 @@ export async function GET(request: Request) {
 
   console.log('[morning-briefing] date range — today:', todayStart, '→', todayEnd)
 
-  const { data: agencies, error: agencyErr } = await supabase.from('agencies').select('id, name')
+  const { data: agencies, error: agencyErr } = await supabase
+    .from('agencies')
+    .select('id, name, notif_morning_briefing, notif_hot_leads')
   if (agencyErr) {
     console.error('[morning-briefing] ⚠ agencies fetch error:', agencyErr.message)
     return NextResponse.json({ error: agencyErr.message }, { status: 500 })
@@ -80,6 +82,16 @@ export async function GET(request: Request) {
         continue
       }
 
+      // Check notification preferences (default true if column missing / null)
+      const sendBriefing = agency.notif_morning_briefing !== false
+      const includeHotLeads = agency.notif_hot_leads !== false
+
+      if (!sendBriefing) {
+        console.log(`${ctx} notif_morning_briefing=false — skipping`)
+        skipped++
+        continue
+      }
+
       const firstName = owner.full_name?.split(' ')[0] ?? 'Agent'
 
       // Today's appointments
@@ -104,16 +116,20 @@ export async function GET(request: Request) {
         })
       }
 
-      // Hot leads (score > 7, still active)
-      const { data: hotLeads, error: hotErr } = await supabase
-        .from('leads')
-        .select('first_name, last_name, phone, budget, ai_score')
-        .eq('agency_id', agency.id)
-        .gt('ai_score', 7)
-        .in('status', ['nouveau', 'contacte', 'qualifie', 'rdv_planifie', 'proposition'])
-        .order('ai_score', { ascending: false })
-        .limit(5)
-      if (hotErr) console.error(`${ctx} ⚠ hot leads error:`, hotErr.message)
+      // Hot leads (score > 7, still active) — skipped if notif_hot_leads=false
+      let hotLeads: { first_name: string; last_name: string | null; phone: string | null; budget: number | null; ai_score: number | null }[] | null = null
+      if (includeHotLeads) {
+        const { data, error: hotErr } = await supabase
+          .from('leads')
+          .select('first_name, last_name, phone, budget, ai_score')
+          .eq('agency_id', agency.id)
+          .gt('ai_score', 7)
+          .in('status', ['nouveau', 'contacte', 'qualifie', 'rdv_planifie', 'proposition'])
+          .order('ai_score', { ascending: false })
+          .limit(5)
+        if (hotErr) console.error(`${ctx} ⚠ hot leads error:`, hotErr.message)
+        hotLeads = data
+      }
 
       // Leads pending follow-up
       const { count: pendingCount, error: pendingErr } = await supabase
@@ -142,16 +158,21 @@ export async function GET(request: Request) {
           }).join('')
         : `<li style="color:#94a3b8;font-size:14px;padding:10px 0">Aucun rendez-vous aujourd'hui</li>`
 
-      const hotRows = (hotLeads ?? []).length > 0
-        ? (hotLeads ?? []).map(l => {
-            const name = [l.first_name, l.last_name].filter(Boolean).join(' ')
-            const budget = l.budget ? fmt.format(l.budget) : 'budget N/A'
-            const phone = l.phone ? ` — 📱 ${l.phone}` : ''
-            return `<li style="margin-bottom:10px;padding:10px 14px;background:#fff4f0;border:1px solid #ffdecc;border-radius:8px;font-size:14px;color:#1B2B4B">
-              🔥 <strong>${name}</strong> — Score <strong>${l.ai_score}/10</strong> — ${budget}${phone}
-            </li>`
-          }).join('')
-        : `<li style="color:#94a3b8;font-size:14px;padding:10px 0">Aucun lead chaud en ce moment</li>`
+      const hotSection = includeHotLeads ? (() => {
+        const rows = (hotLeads ?? []).length > 0
+          ? (hotLeads ?? []).map(l => {
+              const name = [l.first_name, l.last_name].filter(Boolean).join(' ')
+              const budget = l.budget ? fmt.format(l.budget) : 'budget N/A'
+              const phone = l.phone ? ` — 📱 ${l.phone}` : ''
+              return `<li style="margin-bottom:10px;padding:10px 14px;background:#fff4f0;border:1px solid #ffdecc;border-radius:8px;font-size:14px;color:#1B2B4B">
+                🔥 <strong>${name}</strong> — Score <strong>${l.ai_score}/10</strong> — ${budget}${phone}
+              </li>`
+            }).join('')
+          : `<li style="color:#94a3b8;font-size:14px;padding:10px 0">Aucun lead chaud en ce moment</li>`
+        return `
+    <h2 style="font-size:13px;color:#FF6B35;text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin:0 0 12px">🔥 Leads chauds à appeler en priorité</h2>
+    <ul style="list-style:none;margin:0 0 28px;padding:0">${rows}</ul>`
+      })() : ''
 
       const html = `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#f8fafc">
@@ -164,9 +185,7 @@ export async function GET(request: Request) {
 
     <h2 style="font-size:13px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin:0 0 12px">📅 Rendez-vous du jour</h2>
     <ul style="list-style:none;margin:0 0 28px;padding:0">${apptRows}</ul>
-
-    <h2 style="font-size:13px;color:#FF6B35;text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin:0 0 12px">🔥 Leads chauds à appeler en priorité</h2>
-    <ul style="list-style:none;margin:0 0 28px;padding:0">${hotRows}</ul>
+    ${hotSection}
 
     <table style="width:100%;border-collapse:collapse;margin-bottom:32px">
       <tr>
@@ -204,7 +223,7 @@ export async function GET(request: Request) {
           to: owner.email,
           subject,
           html,
-          text: `Bonjour ${firstName} ! RDV aujourd'hui : ${(todayAppts ?? []).length}. Leads chauds : ${(hotLeads ?? []).length}. En attente de relance : ${pendingCount ?? 0}. Commission potentielle : ${potentialCommission > 0 ? fmt.format(potentialCommission) : '—'}.`,
+          text: `Bonjour ${firstName} ! RDV aujourd'hui : ${(todayAppts ?? []).length}.${includeHotLeads ? ` Leads chauds : ${(hotLeads ?? []).length}.` : ''} En attente de relance : ${pendingCount ?? 0}. Commission potentielle : ${potentialCommission > 0 ? fmt.format(potentialCommission) : '—'}.`,
         })
         console.log(`${ctx} ✓ sendEmail OK`)
         sent++

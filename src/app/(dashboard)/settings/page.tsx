@@ -20,7 +20,7 @@ export default async function SettingsPage() {
   const { data: agency } = member?.agency_id
     ? await supabase
         .from('agencies')
-        .select('id, name, slug, logo_url, website_url, phone, address')
+        .select('id, name, slug, logo_url, website_url, phone, address, notif_morning_briefing, notif_weekly_report, notif_hot_leads')
         .eq('id', member.agency_id)
         .single()
     : { data: null }
@@ -54,6 +54,11 @@ export default async function SettingsPage() {
           full_name: profile?.full_name ?? '',
           email: profile?.email ?? user.email ?? '',
           avatar_url: profile?.avatar_url ?? null,
+        }}
+        initialNotifPrefs={{
+          notif_morning_briefing: agency?.notif_morning_briefing ?? true,
+          notif_weekly_report:    agency?.notif_weekly_report    ?? true,
+          notif_hot_leads:        agency?.notif_hot_leads        ?? true,
         }}
       />
     </div>

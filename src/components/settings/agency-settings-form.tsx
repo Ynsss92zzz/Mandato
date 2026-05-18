@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Building2, User, Globe, Phone, MapPin, Lock, Save, CheckCircle, Mail, X } from 'lucide-react'
-import { updateAgencySettings, updateProfileSettings } from '@/actions/settings'
+import { Building2, User, Globe, Phone, MapPin, Lock, Save, CheckCircle, Mail, X, Bell } from 'lucide-react'
+import { updateAgencySettings, updateNotificationPreferences, updateProfileSettings } from '@/actions/settings'
 import { createClient } from '@/lib/supabase/client'
 
 interface AgencyData {
@@ -20,12 +20,19 @@ interface ProfileData {
   avatar_url: string | null
 }
 
+interface NotifPrefs {
+  notif_morning_briefing: boolean
+  notif_weekly_report: boolean
+  notif_hot_leads: boolean
+}
+
 interface Props {
   agencyId: string
   userId: string
   isOwner: boolean
   initialAgency: AgencyData
   initialProfile: ProfileData
+  initialNotifPrefs: NotifPrefs
 }
 
 function Field({
@@ -67,6 +74,39 @@ function Field({
   )
 }
 
+function Toggle({
+  label, description, checked, onChange,
+}: {
+  label: string
+  description: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between py-3.5 border-b border-zinc-50 last:border-0">
+      <div className="pr-6">
+        <p className="text-sm font-medium text-zinc-800">{label}</p>
+        <p className="text-xs text-zinc-400 mt-0.5">{description}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors focus:outline-none ${
+          checked ? 'bg-[#1B2B4B]' : 'bg-zinc-200'
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+            checked ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </div>
+  )
+}
+
 function SaveButton({ isPending, saved }: { isPending: boolean; saved: boolean }) {
   return (
     <button
@@ -94,15 +134,19 @@ function SaveButton({ isPending, saved }: { isPending: boolean; saved: boolean }
   )
 }
 
-export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialProfile }: Props) {
+export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialProfile, initialNotifPrefs }: Props) {
   const [agency, setAgency] = useState<AgencyData>(initialAgency)
   const [profile, setProfile] = useState<ProfileData>(initialProfile)
+  const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(initialNotifPrefs)
   const [agencySaved, setAgencySaved] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+  const [notifSaved, setNotifSaved] = useState(false)
   const [agencyError, setAgencyError] = useState<string | null>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
+  const [notifError, setNotifError] = useState<string | null>(null)
   const [agencyPending, startAgencyTransition] = useTransition()
   const [profilePending, startProfileTransition] = useTransition()
+  const [notifPending, startNotifTransition] = useTransition()
 
   const [emailChangeMode, setEmailChangeMode] = useState(false)
   const [newEmail, setNewEmail] = useState('')
@@ -139,6 +183,24 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
       } else {
         setProfileSaved(true)
         setTimeout(() => setProfileSaved(false), 3000)
+      }
+    })
+  }
+
+  function handleNotifSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setNotifError(null)
+    startNotifTransition(async () => {
+      const fd = new FormData()
+      fd.set('notif_morning_briefing', String(notifPrefs.notif_morning_briefing))
+      fd.set('notif_weekly_report',    String(notifPrefs.notif_weekly_report))
+      fd.set('notif_hot_leads',        String(notifPrefs.notif_hot_leads))
+      const result = await updateNotificationPreferences(fd)
+      if (result?.error) {
+        setNotifError(result.error)
+      } else {
+        setNotifSaved(true)
+        setTimeout(() => setNotifSaved(false), 3000)
       }
     })
   }
@@ -392,6 +454,50 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
 
           <div className="flex justify-end pt-2">
             <SaveButton isPending={profilePending} saved={profileSaved} />
+          </div>
+        </form>
+      </section>
+
+      {/* Notification preferences */}
+      <section className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-100 flex items-center gap-3">
+          <div className="w-8 h-8 bg-[#f0f3f9] rounded-lg flex items-center justify-center">
+            <Bell className="w-4 h-4 text-[#1B2B4B]" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-zinc-800">Notifications</h2>
+            <p className="text-xs text-zinc-400">Choisissez les emails automatiques que vous souhaitez recevoir</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleNotifSubmit} className="px-6 pt-2 pb-6">
+          {notifError && (
+            <div className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-4 py-3 mb-4">
+              {notifError}
+            </div>
+          )}
+
+          <Toggle
+            label="Briefing matinal"
+            description="Résumé des RDV du jour, leads chauds et statistiques — tous les matins à 9h"
+            checked={notifPrefs.notif_morning_briefing}
+            onChange={(v) => setNotifPrefs((p) => ({ ...p, notif_morning_briefing: v }))}
+          />
+          <Toggle
+            label="Rapport hebdomadaire"
+            description="Bilan de la semaine : leads, messages envoyés, RDV — chaque lundi matin"
+            checked={notifPrefs.notif_weekly_report}
+            onChange={(v) => setNotifPrefs((p) => ({ ...p, notif_weekly_report: v }))}
+          />
+          <Toggle
+            label="Alertes leads chauds"
+            description="Section leads prioritaires incluse dans le briefing matinal (score IA > 7)"
+            checked={notifPrefs.notif_hot_leads}
+            onChange={(v) => setNotifPrefs((p) => ({ ...p, notif_hot_leads: v }))}
+          />
+
+          <div className="flex justify-end pt-4">
+            <SaveButton isPending={notifPending} saved={notifSaved} />
           </div>
         </form>
       </section>
