@@ -10,13 +10,25 @@ export const runtime = 'nodejs'
 // Processes pending sequence enrollments and sends messages when delay has elapsed
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET?.trim()
+
+  const auth = request.headers.get('authorization') ?? ''
+  const expected = cronSecret ? `Bearer ${cronSecret}` : '(CRON_SECRET not set)'
+
+  console.log('[sequences cron] AUTH DEBUG —',
+    'received header:', JSON.stringify(auth),
+    '| received length:', auth.length,
+    '| expected length:', expected.length,
+    '| CRON_SECRET set:', !!cronSecret,
+    '| CRON_SECRET length:', cronSecret?.length ?? 0,
+    '| CRON_SECRET last4:', cronSecret ? cronSecret.slice(-4) : '(none)',
+    '| match:', auth === expected,
+  )
+
   if (!cronSecret) {
     console.error('[sequences cron] CRON_SECRET is not set in environment variables')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const auth = request.headers.get('authorization')
-  if (auth !== `Bearer ${cronSecret}`) {
-    console.error('[sequences cron] Authorization mismatch — received:', auth?.slice(0, 20) ?? '(none)')
+  if (auth !== expected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
