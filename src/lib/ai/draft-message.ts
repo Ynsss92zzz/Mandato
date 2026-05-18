@@ -15,6 +15,9 @@ interface DraftMessageInput {
   lead: {
     first_name: string
     last_name?: string | null
+    budget?: string | null
+    property_type?: string | null
+    location_desired?: string | null
     ai_analysis?: {
       profil?: string
       intention?: string
@@ -47,16 +50,26 @@ export async function draftMessage(input: DraftMessageInput): Promise<string> {
     agentContext?.agencyAddress && `Adresse : ${agentContext.agencyAddress}`,
   ].filter(Boolean).join('\n')
 
+  const leadLines = [
+    `Prénom : ${lead.first_name}`,
+    lead.last_name         && `Nom : ${lead.last_name}`,
+    lead.budget            && `Budget déclaré : ${lead.budget}`,
+    lead.property_type     && `Type de bien recherché : ${lead.property_type}`,
+    lead.location_desired  && `Localisation souhaitée : ${lead.location_desired}`,
+    lead.ai_analysis?.profil        && `Profil IA : ${lead.ai_analysis.profil}`,
+    lead.ai_analysis?.intention     && `Intention : ${lead.ai_analysis.intention}`,
+    lead.ai_analysis?.budget_estime && `Budget estimé (IA) : ${lead.ai_analysis.budget_estime}`,
+    lead.ai_analysis?.urgence       && `Urgence : ${lead.ai_analysis.urgence}`,
+  ].filter(Boolean).join('\n')
+
   const prompt = `Tu es un agent immobilier français expert en communication client. Rédige un message de relance personnalisé.
 
-Lead : ${lead.first_name}${lead.last_name ? ' ' + lead.last_name : ''}
-Profil IA : ${lead.ai_analysis?.profil ?? 'Non analysé'}
-Intention : ${lead.ai_analysis?.intention ?? 'Inconnue'}
-Budget estimé : ${lead.ai_analysis?.budget_estime ?? 'Inconnu'}
-Urgence : ${lead.ai_analysis?.urgence ?? 'Inconnue'}
+Données du lead :
+${leadLines}
+
 Canal : ${channel}
-${context ? `Contexte supplémentaire : ${context}` : ''}
-${firstName ? `L'agent s'appelle ${firstName}.` : ''}
+${context ? `\nInstructions de l'agent :\n${context}` : ''}
+${firstName ? `\nL'agent s'appelle ${firstName}.` : ''}
 
 ${signatureLines ? `Informations de contact réelles à utiliser dans la signature :\n${signatureLines}` : ''}
 

@@ -83,21 +83,60 @@ export async function GET(request: NextRequest) {
   console.log('[sequences cron] processing IDs:', enrollments.map(e => e.id.slice(0, 8)).join(', '))
   console.log('[sequences cron] first enrollment (raw):', JSON.stringify(enrollments[0]))
 
-  // Build agencyId → "Agency Name <noreply@withmandato.com>" map for email From header
+  // Build agencyId → "Agency Name <noreply@mandato.fr>" map for email From header
+  // Also fetch agency phone/address for AI-generated messages
   const agencyIds = [...new Set(enrollments.map(e => e.agency_id))]
   const { data: agencies, error: agencyErr } = await supabase
     .from('agencies')
-    .select('id, name')
+    .select('id, name, phone, address')
     .in('id', agencyIds)
 
   if (agencyErr) console.error('[sequences cron] agency fetch error:', agencyErr.message)
 
   const agencyFromMap = new Map<string, string>()
+  const agencyDataMap = new Map<string, { name: string | null; phone: string | null; address: string | null }>()
   for (const a of (agencies ?? [])) {
-    const agency = a as unknown as { id: string; name: string | null }
+    const agency = a as unknown as { id: string; name: string | null; phone: string | null; address: string | null }
     agencyFromMap.set(agency.id, buildAgencyFromAddress(agency.name))
+    agencyDataMap.set(agency.id, { name: agency.name, phone: agency.phone, address: agency.address })
   }
   console.log('[sequences cron] from addresses:', Object.fromEntries(agencyFromMap))
+
+  // Fetch owner profiles for AI-generated messages (batch — two queries like morning-briefing)
+  const { data: ownerMemberRows } = await supabase
+    .from('agency_members')
+    .select('agency_id, profile_id')
+    .in('agency_id', agencyIds)
+    .eq('role', 'owner')
+
+  const ownerProfileIds = (ownerMemberRows ?? []).map(m => m.profile_id).filter(Boolean) as string[]
+  const { data: ownerProfileRows } = ownerProfileIds.length > 0
+    ? await supabase.from('profiles').select('id, full_name, email').in('id', ownerProfileIds)
+    : { data: [] }
+
+  const profileById = new Map<string, { full_name: string | null; email: string }>()
+  for (const p of (ownerProfileRows ?? [])) {
+    const profile = p as unknown as { id: string; full_name: string | null; email: string }
+    profileById.set(profile.id, { full_name: profile.full_name, email: profile.email })
+  }
+
+  // agency_id → agent context for draftMessage
+  const agencyOwnerMap = new Map<string, { fullName: string | null; email: string; agencyPhone: string | null; agencyAddress: string | null; agencyName: string | null }>()
+  for (const m of (ownerMemberRows ?? [])) {
+    const member = m as unknown as { agency_id: string; profile_id: string }
+    const profile = profileById.get(member.profile_id)
+    if (profile) {
+      const agencyData = agencyDataMap.get(member.agency_id)
+      agencyOwnerMap.set(member.agency_id, {
+        fullName: profile.full_name,
+        email: profile.email,
+        agencyPhone: agencyData?.phone ?? null,
+        agencyAddress: agencyData?.address ?? null,
+        agencyName: agencyData?.name ?? null,
+      })
+    }
+  }
+  console.log('[sequences cron] owner profiles loaded for', agencyOwnerMap.size, 'agency(ies)')
 
   // DIAGNOSTIC: dump all steps for sequences being processed so we can verify step_order and channel
   {
@@ -198,23 +237,22 @@ export async function GET(request: NextRequest) {
       let content: string
 
       if (step.is_ai_generated) {
-        // content_template holds instructions — let AI generate the actual message
-        const leadContext = [
-          `Prénom : ${lead.first_name}`,
-          lead.last_name              && `Nom : ${lead.last_name}`,
-          budgetStr                   && `Budget : ${budgetStr}`,
-          lead.property_type          && `Type de bien recherché : ${lead.property_type}`,
-          lead.location_desired       && `Localisation souhaitée : ${lead.location_desired}`,
-        ].filter(Boolean).join('\n')
+        // content_template holds agent instructions — AI generates the final message
+        const ownerCtx = agencyOwnerMap.get(enrollment.agency_id)
+        console.log(`${ctx} is_ai_generated=true — agentContext: ${ownerCtx ? `"${ownerCtx.fullName}" <${ownerCtx.email}>` : '(none)'} | channel=${step.channel}`)
 
-        const instructions = `Instructions de l'agent :\n${step.content_template}\n\nDonnées du lead :\n${leadContext}`
-
-        console.log(`${ctx} is_ai_generated=true — calling draftMessage | channel=${step.channel}`)
         try {
           content = await draftMessage({
-            lead: { first_name: lead.first_name, last_name: lead.last_name },
+            lead: {
+              first_name: lead.first_name,
+              last_name: lead.last_name,
+              budget: budgetStr || null,
+              property_type: lead.property_type,
+              location_desired: lead.location_desired,
+            },
             channel: step.channel as import('@/types').MessageChannel,
-            context: instructions,
+            context: step.content_template,
+            agentContext: ownerCtx ?? undefined,
           })
           console.log(`${ctx} ✓ AI content generated (${content.length} chars)`)
         } catch (aiErr) {
