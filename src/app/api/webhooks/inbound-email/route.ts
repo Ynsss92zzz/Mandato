@@ -174,6 +174,56 @@ export async function POST(request: Request) {
 
   console.log('[inbound-email] ✓ lead created:', lead.id)
 
+  // Create conversation + save the inbound email as a message
+  try {
+    // Reuse existing conversation if one was already created (e.g. by auto-enroll)
+    const { data: existingConv } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('lead_id', lead.id)
+      .eq('channel', 'email')
+      .maybeSingle()
+
+    let conversationId: string
+    if (existingConv) {
+      conversationId = existingConv.id
+    } else {
+      const { data: newConv, error: convErr } = await supabase
+        .from('conversations')
+        .insert({ agency_id: agencyId, lead_id: lead.id, channel: 'email' })
+        .select('id')
+        .single()
+      if (convErr || !newConv) throw new Error(convErr?.message ?? 'conv insert failed')
+      conversationId = newConv.id
+    }
+
+    const emailContent = rawText?.trim().slice(0, 5000) || rawSubject || '(email sans corps)'
+    const now = new Date().toISOString()
+
+    await supabase.from('messages').insert({
+      agency_id:       agencyId,
+      conversation_id: conversationId,
+      lead_id:         lead.id,
+      sender_id:       null,
+      channel:         'email',
+      direction:       'entrant',
+      content:         emailContent,
+      subject:         rawSubject || null,
+      is_ai_generated: false,
+      status:          'received',
+      sent_at:         now,
+    })
+
+    await supabase
+      .from('conversations')
+      .update({ last_message_at: now })
+      .eq('id', conversationId)
+
+    console.log('[inbound-email] ✓ conversation + message created:', conversationId)
+  } catch (err) {
+    console.error('[inbound-email] ⚠ conversation/message error:', (err as Error).message)
+  }
+
   // Auto-enroll in sequences with trigger_on='lead_created'
   try {
     await autoEnrollNewLead(agencyId, lead.id)

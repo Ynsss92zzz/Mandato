@@ -25,17 +25,21 @@ export async function POST(request: NextRequest) {
   // Determine channel from the "To" field
   const channel = toNumber.startsWith('whatsapp:') ? 'whatsapp' : 'sms'
 
-  // Normalize phone: strip "whatsapp:" prefix
-  const phone = from.replace('whatsapp:', '')
+  // Normalize phone: strip "whatsapp:" prefix — Twilio always sends E.164
+  const phoneE164 = from.replace('whatsapp:', '')
+  // Also try local French format (0XXXXXXXXX) in case the lead was stored without country code
+  const phoneLocal = phoneE164.startsWith('+33') ? '0' + phoneE164.slice(3) : null
 
   const supabase = createAdminClient()
 
-  // Find lead by phone number
+  // Find lead by phone number — try both E.164 and local format
   const { data: lead } = await supabase
     .from('leads')
     .select('id, agency_id')
-    .eq('phone', phone)
+    .or(phoneLocal ? `phone.eq.${phoneE164},phone.eq.${phoneLocal}` : `phone.eq.${phoneE164}`)
     .maybeSingle()
+
+  const phone = phoneE164
 
   if (!lead) {
     // Unknown sender — respond with empty TwiML so Twilio doesn't retry

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { sendMessage } from '@/actions/messages'
 import type { Database } from '@/types/database'
@@ -107,17 +108,51 @@ function ConversationThread({
   const ch = conversation.channel
 
   useEffect(() => {
+    let mounted = true
     setLoading(true)
+    setMessages([])
     const supabase = createClient()
+
+    // Initial fetch
     supabase
       .from('messages')
       .select('*')
       .eq('conversation_id', conversation.id)
       .order('created_at', { ascending: true })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (!mounted) return
+        if (error) console.error('[ConversationThread] fetch error:', error.message, error.code)
         setMessages(data ?? [])
         setLoading(false)
       })
+
+    // Real-time: append new messages as they are inserted
+    const channel = supabase
+      .channel(`conv-${conversation.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversation.id}`,
+        },
+        (payload) => {
+          if (!mounted) return
+          setMessages((prev) => {
+            const msg = payload.new as Message
+            // Deduplicate: optimistic add from handleSend may already include it
+            if (prev.some((m) => m.id === msg.id)) return prev
+            return [...prev, msg]
+          })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      mounted = false
+      supabase.removeChannel(channel)
+    }
   }, [conversation.id])
 
   useEffect(() => {
@@ -222,11 +257,46 @@ function ConversationThread({
   )
 }
 
-export function ConversationView({ conversations }: { conversations: ConversationSummary[] }) {
+export function ConversationView({ conversations: initialConversations }: { conversations: ConversationSummary[] }) {
+  const [conversations, setConversations] = useState<ConversationSummary[]>(initialConversations)
   const [selected, setSelected] = useState<ConversationSummary | null>(
-    conversations.length > 0 ? conversations[0] : null
+    initialConversations.length > 0 ? initialConversations[0] : null
   )
   const [search, setSearch] = useState('')
+  const router = useRouter()
+
+  // Sync when server re-renders (after router.refresh())
+  useEffect(() => {
+    setConversations(initialConversations)
+  }, [initialConversations])
+
+  // Real-time: update last_message_at order; trigger refresh for new conversations
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('conversations-list')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'conversations' },
+        () => { router.refresh() }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'conversations' },
+        (payload) => {
+          const updated = payload.new as { id: string; last_message_at: string }
+          setConversations((prev) =>
+            [...prev.map((c) =>
+              c.id === updated.id ? { ...c, last_message_at: updated.last_message_at } : c
+            )].sort((a, b) =>
+              new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
+            )
+          )
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [])
 
   const filtered = conversations.filter((c) =>
     c.leadName.toLowerCase().includes(search.toLowerCase()) ||
