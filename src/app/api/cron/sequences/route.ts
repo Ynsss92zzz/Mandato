@@ -426,7 +426,7 @@ export async function GET(request: NextRequest) {
         if (step.channel !== 'note') {
           const { error: leadStatusErr } = await supabase
             .from('leads')
-            .update({ status: 'contacte' })
+            .update({ status: 'contacte', last_contacted_at: sentAt })
             .eq('id', enrollment.lead_id)
             .eq('status', 'nouveau')
           if (leadStatusErr) {

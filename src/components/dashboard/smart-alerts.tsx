@@ -22,7 +22,7 @@ export async function SmartAlerts() {
     supabase
       .from('leads')
       .select('id', { count: 'exact', head: true })
-      .in('status', ['nouveau', 'contacte'])
+      .eq('status', 'nouveau')
       .or(`last_contacted_at.is.null,last_contacted_at.lte.${sevenDaysAgo}`),
     supabase
       .from('appointments')

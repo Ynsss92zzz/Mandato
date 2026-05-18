@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { EmailOtpType } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -47,10 +48,16 @@ export async function GET(request: NextRequest) {
 
   // Token hash flow — email change, email confirmation, password recovery
   if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
-    if (!error) {
-      // Only set for non-email-change flows (we don't want to change login persistence on email updates)
-      if (type !== 'email_change') {
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+    if (!error && data.user) {
+      if (type === 'email_change') {
+        // auth.users.email is now updated — sync profiles.email so the settings page reflects it
+        const admin = createAdminClient()
+        await admin
+          .from('profiles')
+          .update({ email: data.user.email, updated_at: new Date().toISOString() })
+          .eq('id', data.user.id)
+      } else {
         cookieStore.set('mandato_rm', '1', cookieOpts)
       }
       return NextResponse.redirect(`${origin}${next}`)
