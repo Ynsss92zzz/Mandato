@@ -238,7 +238,7 @@ export function LeadsView({ leads, plan = 'starter' }: { leads: Lead[]; plan?: '
 
       {/* Main content */}
       {view === 'kanban' ? (
-        <LeadKanban initialLeads={filteredLeads} onEdit={openEdit} showHot={showHot} />
+        <LeadKanban key={projectTypeFilter ?? 'all'} initialLeads={filteredLeads} onEdit={openEdit} showHot={showHot} />
       ) : (
         <LeadList leads={filteredLeads} onEdit={openEdit} showHot={showHot} />
       )}
