@@ -10,7 +10,7 @@ async function signout(request: NextRequest) {
   cookieStore.delete('mandato_rm')
 
   const origin = new URL(request.url).origin
-  return NextResponse.redirect(`${origin}/login`)
+  return NextResponse.redirect(`${origin}/login`, { status: 303 })
 }
 
 // GET — used by dashboard layout auto-logout redirect
