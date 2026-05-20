@@ -311,16 +311,29 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
           />
 
           <div>
-            <Field
-              label="Email entrant (pour recevoir les leads)"
-              name="inbound_email"
-              value={agency.inbound_email ?? ''}
-              onChange={(v) => setAgency((a) => ({ ...a, inbound_email: v || null }))}
-              placeholder="leads@votre-agence.fr"
-              type="email"
-              disabled={!isOwner}
-              icon={Mail}
-            />
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+              Email entrant (pour recevoir les leads)
+            </label>
+            <div className="flex items-center">
+              <div className="relative flex-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                <input
+                  name="inbound_email_prefix"
+                  type="text"
+                  value={agency.inbound_email?.replace('@withmandato.com', '') ?? ''}
+                  onChange={(e) => {
+                    const prefix = e.target.value.replace(/[@\s]/g, '').toLowerCase()
+                    setAgency((a) => ({ ...a, inbound_email: prefix ? `${prefix}@withmandato.com` : null }))
+                  }}
+                  placeholder="jean"
+                  disabled={!isOwner}
+                  className="w-full border border-zinc-200 rounded-l-xl py-2.5 pl-9 pr-3 text-sm outline-none transition focus:ring-2 focus:ring-[#1B2B4B]/20 focus:border-[#1B2B4B] disabled:bg-zinc-50 disabled:text-zinc-400 disabled:cursor-not-allowed"
+                />
+              </div>
+              <span className="shrink-0 border border-l-0 border-zinc-200 rounded-r-xl px-3 py-2.5 text-sm text-zinc-400 bg-zinc-50 select-none">
+                @withmandato.com
+              </span>
+            </div>
             <p className="text-xs text-zinc-400 mt-1.5">
               Configurez cette adresse dans votre gestionnaire d&apos;emails (redirection ou alias). Les emails reçus ici seront automatiquement créés comme leads.
             </p>

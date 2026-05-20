@@ -20,8 +20,8 @@ export async function updateAgencySettings(formData: FormData): Promise<{ error?
   if (member?.role !== 'owner') return { error: 'Permission insuffisante' }
 
   const rawInboundEmail = (formData.get('inbound_email') as string).trim().toLowerCase() || null
-  if (rawInboundEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawInboundEmail)) {
-    return { error: 'Adresse email entrante invalide' }
+  if (rawInboundEmail && !rawInboundEmail.endsWith('@withmandato.com')) {
+    return { error: 'L\'email entrant doit utiliser le domaine @withmandato.com' }
   }
 
   const { error } = await supabase
