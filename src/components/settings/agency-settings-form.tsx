@@ -321,8 +321,11 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
                   name="inbound_email_prefix"
                   type="text"
                   value={agency.inbound_email?.replace('@withmandato.com', '') ?? ''}
+                  onKeyDown={(e) => {
+                    if (e.key === '@' || e.key === ' ') e.preventDefault()
+                  }}
                   onChange={(e) => {
-                    const prefix = e.target.value.replace(/[@\s]/g, '').toLowerCase()
+                    const prefix = e.target.value.replace(/[^a-zA-Z0-9._+\-]/g, '').toLowerCase()
                     setAgency((a) => ({ ...a, inbound_email: prefix ? `${prefix}@withmandato.com` : null }))
                   }}
                   placeholder="jean"
