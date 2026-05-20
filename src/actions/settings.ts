@@ -19,6 +19,11 @@ export async function updateAgencySettings(formData: FormData): Promise<{ error?
 
   if (member?.role !== 'owner') return { error: 'Permission insuffisante' }
 
+  const rawInboundEmail = (formData.get('inbound_email') as string).trim().toLowerCase() || null
+  if (rawInboundEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawInboundEmail)) {
+    return { error: 'Adresse email entrante invalide' }
+  }
+
   const { error } = await supabase
     .from('agencies')
     .update({
@@ -28,6 +33,7 @@ export async function updateAgencySettings(formData: FormData): Promise<{ error?
       website_url: (formData.get('website_url') as string) || null,
       phone: (formData.get('phone') as string) || null,
       address: (formData.get('address') as string) || null,
+      inbound_email: rawInboundEmail,
       updated_at: new Date().toISOString(),
     })
     .eq('id', agencyId)

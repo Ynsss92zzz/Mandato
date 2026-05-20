@@ -19,6 +19,7 @@ export interface Database {
           phone: string | null
           address: string | null
           referral_code: string | null
+          inbound_email: string | null
           notif_morning_briefing: boolean
           notif_weekly_report: boolean
           notif_hot_leads: boolean
@@ -36,6 +37,7 @@ export interface Database {
           phone?: string | null
           address?: string | null
           referral_code?: string | null
+          inbound_email?: string | null
           notif_morning_briefing?: boolean
           notif_weekly_report?: boolean
           notif_hot_leads?: boolean
@@ -53,6 +55,7 @@ export interface Database {
           phone?: string | null
           address?: string | null
           referral_code?: string | null
+          inbound_email?: string | null
           notif_morning_briefing?: boolean
           notif_weekly_report?: boolean
           notif_hot_leads?: boolean

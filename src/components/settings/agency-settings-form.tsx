@@ -12,6 +12,7 @@ interface AgencyData {
   website_url: string | null
   phone: string | null
   address: string | null
+  inbound_email: string | null
 }
 
 interface ProfileData {
@@ -308,6 +309,22 @@ export function AgencySettingsForm({ agencyId, isOwner, initialAgency, initialPr
             disabled={!isOwner}
             icon={MapPin}
           />
+
+          <div>
+            <Field
+              label="Email entrant (pour recevoir les leads)"
+              name="inbound_email"
+              value={agency.inbound_email ?? ''}
+              onChange={(v) => setAgency((a) => ({ ...a, inbound_email: v || null }))}
+              placeholder="leads@votre-agence.fr"
+              type="email"
+              disabled={!isOwner}
+              icon={Mail}
+            />
+            <p className="text-xs text-zinc-400 mt-1.5">
+              Configurez cette adresse dans votre gestionnaire d&apos;emails (redirection ou alias). Les emails reçus ici seront automatiquement créés comme leads.
+            </p>
+          </div>
 
           {/* Logo URL */}
           <div>

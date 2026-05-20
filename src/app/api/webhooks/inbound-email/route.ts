@@ -48,13 +48,23 @@ function extractPhone(text: string): string | null {
   return match ? match[0].replace(/[\s.\-]/g, '') : null
 }
 
-function extractAgencyId(toAddresses: string | string[]): string | null {
-  const addrs = Array.isArray(toAddresses) ? toAddresses : [toAddresses]
-  for (const addr of addrs) {
+function extractAgencyId(toAddresses: string[]): string | null {
+  for (const addr of toAddresses) {
     const match = addr.match(/leads-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})@/i)
     if (match) return match[1]
   }
   return null
+}
+
+function normalizeToAddresses(rawTo: unknown): string[] {
+  const addrs = Array.isArray(rawTo) ? rawTo : [String(rawTo ?? '')]
+  return addrs
+    .flatMap((a: unknown) => String(a).split(','))
+    .map((a) => {
+      const m = a.match(/<([^>]+)>/)
+      return (m ? m[1] : a).trim().toLowerCase()
+    })
+    .filter(Boolean)
 }
 
 function nameFromEmail(email: string): string {
@@ -105,27 +115,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No sender email' }, { status: 400 })
   }
 
-  const agencyId = extractAgencyId(rawTo as string | string[])
-  if (!agencyId) {
-    console.error('[inbound-email] ⚠ could not extract agency_id from to:', rawTo)
-    return NextResponse.json({ error: 'Invalid recipient format' }, { status: 400 })
-  }
-
-  console.log('[inbound-email] agency_id:', agencyId, '| sender:', senderEmail)
+  const toAddresses = normalizeToAddresses(rawTo)
+  console.log('[inbound-email] to (normalized):', toAddresses)
 
   const supabase = createAdminClient()
 
-  // Verify agency exists
-  const { data: agency } = await supabase
-    .from('agencies')
-    .select('id')
-    .eq('id', agencyId)
-    .maybeSingle()
+  // Resolve agency — first by configured inbound_email, then by leads-{uuid} format
+  let agencyId: string | null = null
 
-  if (!agency) {
-    console.error('[inbound-email] ⚠ agency not found:', agencyId)
+  if (toAddresses.length > 0) {
+    const { data: byEmail } = await supabase
+      .from('agencies')
+      .select('id')
+      .in('inbound_email', toAddresses)
+      .maybeSingle()
+    if (byEmail) {
+      agencyId = byEmail.id
+      console.log('[inbound-email] agency resolved by inbound_email:', agencyId)
+    }
+  }
+
+  if (!agencyId) {
+    const uuidFromAddr = extractAgencyId(toAddresses)
+    if (uuidFromAddr) {
+      const { data: byId } = await supabase
+        .from('agencies')
+        .select('id')
+        .eq('id', uuidFromAddr)
+        .maybeSingle()
+      if (byId) {
+        agencyId = byId.id
+        console.log('[inbound-email] agency resolved by leads-{uuid} address:', agencyId)
+      }
+    }
+  }
+
+  if (!agencyId) {
+    console.error('[inbound-email] ⚠ no agency found for to addresses:', toAddresses)
     return NextResponse.json({ error: 'Agency not found' }, { status: 404 })
   }
+
+  console.log('[inbound-email] agency_id:', agencyId, '| sender:', senderEmail)
 
   // Deduplicate — skip if this email already exists as a lead for this agency
   const { data: existing } = await supabase

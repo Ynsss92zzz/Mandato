@@ -20,7 +20,7 @@ export default async function SettingsPage() {
   const { data: agency } = member?.agency_id
     ? await supabase
         .from('agencies')
-        .select('id, name, slug, logo_url, website_url, phone, address, notif_morning_briefing, notif_weekly_report, notif_hot_leads')
+        .select('id, name, slug, logo_url, website_url, phone, address, inbound_email, notif_morning_briefing, notif_weekly_report, notif_hot_leads')
         .eq('id', member.agency_id)
         .single()
     : { data: null }
@@ -49,6 +49,7 @@ export default async function SettingsPage() {
           website_url: agency?.website_url ?? null,
           phone: agency?.phone ?? null,
           address: agency?.address ?? null,
+          inbound_email: agency?.inbound_email ?? null,
         }}
         initialProfile={{
           full_name: profile?.full_name ?? '',
