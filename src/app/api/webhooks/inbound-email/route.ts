@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'crypto'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { autoEnrollNewLead } from '@/lib/sequences/auto-enroll'
+import { extractLeadFromEmail } from '@/lib/ai/extract-lead-from-email'
 
 export const runtime = 'nodejs'
 
@@ -170,29 +171,49 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, duplicate: true, lead_id: existing.id })
   }
 
-  // Derive name fields
-  const displayName  = senderName ?? nameFromEmail(senderEmail)
-  const nameParts    = displayName.split(/\s+/)
-  const firstName    = nameParts[0] || 'Inconnu'
-  const lastName     = nameParts.length > 1 ? nameParts.slice(1).join(' ') : null
+  // AI extraction — name, phone, budget, property_type, location_desired from email body
+  // Falls back to From header name + regex phone if AI fails
+  let aiExtracted: Awaited<ReturnType<typeof extractLeadFromEmail>> | null = null
+  try {
+    aiExtracted = await extractLeadFromEmail({
+      fromName:  senderName,
+      fromEmail: senderEmail,
+      subject:   rawSubject,
+      bodyText:  rawText,
+    })
+    console.log('[inbound-email] AI extraction:', JSON.stringify(aiExtracted))
+  } catch (aiErr) {
+    console.error('[inbound-email] ⚠ AI extraction failed — using fallbacks:', (aiErr as Error).message)
+  }
 
-  const phone        = extractPhone(rawText)
-  const messageBody  = `${rawSubject ? `Objet : ${rawSubject}\n\n` : ''}${rawText}`.trim().slice(0, 2000) || null
+  // Name: prefer AI result, fall back to From header display name, then email prefix
+  const fallbackName = senderName ?? nameFromEmail(senderEmail)
+  const fallbackParts = fallbackName.split(/\s+/)
+  const firstName = aiExtracted?.first_name ?? fallbackParts[0] ?? 'Inconnu'
+  const lastName  = aiExtracted?.last_name  ?? (fallbackParts.length > 1 ? fallbackParts.slice(1).join(' ') : null)
 
-  console.log('[inbound-email] creating lead — name:', firstName, lastName ?? '', '| phone:', phone ?? '(none)')
+  // Phone: prefer AI, fall back to regex
+  const phone = aiExtracted?.phone ?? extractPhone(rawText)
+
+  const messageBody = `${rawSubject ? `Objet : ${rawSubject}\n\n` : ''}${rawText}`.trim().slice(0, 2000) || null
+
+  console.log('[inbound-email] creating lead — name:', firstName, lastName ?? '', '| phone:', phone ?? '(none)', '| budget:', aiExtracted?.budget ?? '(none)')
 
   const { data: lead, error: insertErr } = await supabase
     .from('leads')
     .insert({
-      agency_id:  agencyId,
-      first_name: firstName,
-      last_name:  lastName,
-      email:      senderEmail,
-      phone:      phone,
-      message:    messageBody,
-      source:     'import' as const,
-      status:     'nouveau' as const,
-      tags:       [] as string[],
+      agency_id:        agencyId,
+      first_name:       firstName,
+      last_name:        lastName,
+      email:            senderEmail,
+      phone:            phone,
+      budget:           aiExtracted?.budget           ?? null,
+      property_type:    aiExtracted?.property_type    ?? null,
+      location_desired: aiExtracted?.location_desired ?? null,
+      message:          messageBody,
+      source:           'import' as const,
+      status:           'nouveau' as const,
+      tags:             [] as string[],
     })
     .select('id')
     .single()

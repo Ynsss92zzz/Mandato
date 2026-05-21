@@ -16,6 +16,7 @@ import {
   Clock,
   BookOpen,
   CreditCard,
+  Calculator,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -28,6 +29,7 @@ const navMain = [
   { href: '/settings/billing',     icon: CreditCard,      label: 'Mon plan' },
   { href: '/sequences/templates',  icon: FileText,        label: 'Templates' },
   { href: '/weekly-reports',       icon: BookOpen,        label: 'Résumés hebdo' },
+  { href: '/calculateur',          icon: Calculator,      label: 'Calculateur' },
 ]
 
 const navAgence = [

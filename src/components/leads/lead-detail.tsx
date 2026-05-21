@@ -83,6 +83,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
   const [showEditForm, setShowEditForm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [estimatedPrice, setEstimatedPrice] = useState(initialLead.budget ? String(initialLead.budget) : '')
+  const [commissionRate, setCommissionRate] = useState(3)
   const [draftChannel, setDraftChannel] = useState<MessageChannel>('email')
   const [draftContext, setDraftContext] = useState('')
   const [draftedMessage, setDraftedMessage] = useState<string | null>(null)
@@ -182,7 +183,7 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
 
   const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
   const parsedPrice = estimatedPrice ? parseFloat(estimatedPrice.replace(/\s/g, '').replace(',', '.')) : NaN
-  const commission = !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice * 0.03 : null
+  const commission = !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice * (commissionRate / 100) : null
 
   return (
     <div className="max-w-5xl">
@@ -317,8 +318,20 @@ export function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                   </button>
                 )}
               </div>
+              <div className="shrink-0 pb-0.5">
+                <label className="text-xs text-zinc-400 mb-1.5 block">Taux (%)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  value={commissionRate}
+                  onChange={(e) => setCommissionRate(parseFloat(e.target.value) || 0)}
+                  className="w-20 border border-zinc-200 rounded-lg px-3 py-2 text-sm text-[#1B2B4B] text-center focus:outline-none focus:border-[#1B2B4B]/50 focus:ring-2 focus:ring-[#1B2B4B]/10 transition-colors"
+                />
+              </div>
               <div className="text-right shrink-0 pb-0.5">
-                <p className="text-xs text-zinc-400 mb-0.5">Commission (3%)</p>
+                <p className="text-xs text-zinc-400 mb-0.5">Commission</p>
                 {commission !== null ? (
                   <p className="text-2xl font-bold text-green-600">{fmt.format(commission)}</p>
                 ) : (
